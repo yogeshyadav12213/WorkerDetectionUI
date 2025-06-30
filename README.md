@@ -34,7 +34,7 @@ Syzaar+ transforms raw visual data from industrial environments into actionable 
 
 | Category | Technologies |
 |----------|-------------|
-| **Backend** | 🐍 Python, 🚀 Django |
+| **Backend** | 🐍 Python,  Django |
 | **Frontend** | 📄 HTML5, 🎨 CSS3, 💡 JavaScript |
 | **Database** | 🗄️ SQLite 3 (Default), 🐘 PostgreSQL (Production) |
 | **AI/ML** | 👁️ OpenCV, 🧠 TensorFlow/PyTorch (Planned) |
@@ -73,7 +73,7 @@ Syzaar+/
 └── manage.py
 ```
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Prerequisites
 
