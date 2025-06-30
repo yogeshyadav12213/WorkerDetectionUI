@@ -164,7 +164,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ### 🖼️ Visual Showcase
 
-#### Zone Configuration Example:
+#### Main Example:
 ![Zone Configuration](Project_Picture/Image%20(2).png)
 
 #### Dashboard UI Preview:
