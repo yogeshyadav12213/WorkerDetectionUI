@@ -1,0 +1,336 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+    <style>
+        .main-content {
+            display: block;
+            padding: 0;
+        }
+        .container {
+            max-width: 2750px;
+            margin: 0 auto;
+            padding: 25vh 6rem 8rem;
+            animation: fadeInUp .8s ease-out
+        }
+        .header{text-align:center;margin-bottom:6.5rem;position:relative}
+        .header h1{font-family:'Audiowide',sans-serif;font-size:6.5rem;color:var(--text);margin-bottom:1.8rem;text-shadow:0 0 50px var(--accent-glow)}
+        .header .subtitle{color:var(--text-dim);font-size:2.2rem;font-weight:300}
+        .header .plus-sign{font-family:'Dancing Script',cursive;color:var(--accent);filter:drop-shadow(0 0 32px var(--accent-glow));font-size:1.2em}
+        .controls{display:flex;justify-content:space-between;align-items:center;margin-bottom:5rem;flex-wrap:wrap;gap:2.5rem}
+        .control-buttons{display:flex;gap:2.5rem}
+        .search-box{position:relative;flex:1;max-width:792px}
+        .search-box .search-icon{position:absolute;left:2.2rem;top:50%;transform:translateY(-50%);width:36px;height:36px;color:var(--text-muted);pointer-events:none;transition:all .3s ease;z-index:2}
+        .search-box input{width:100%;padding:2.42rem 2.2rem 2.42rem 7rem;border-radius:26px;color:var(--text);font-size:2rem;backdrop-filter:blur(12px);transition:all .4s ease,font-size .3s ease;position:relative;z-index:1}
+        .search-box input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 45px var(--accent-glow);font-size:2.5rem}
+        .search-box input:focus+.search-icon{color:var(--accent);transform:translateY(-50%) scale(1.1)}
+        .btn{padding:2.2rem 3.2rem;background:linear-gradient(135deg,var(--accent),var(--accent-hover));border:none;border-radius:26px;color:white;font-weight:600;cursor:pointer;transition:all var(--trans);font-family:'Poppins',sans-serif;font-size:2rem;display:inline-flex;align-items:center;justify-content:center;gap:1.8rem;box-shadow:var(--shadow)}
+        .btn svg{width:32px;height:32px}
+        .btn:hover{transform:translateY(-6px);box-shadow:0 28px 60px rgba(var(--accent-rgb),.4)}
+        .btn:active,.btn-small:active{transform:translateY(-2px) scale(.97)}
+        .btn:active{box-shadow:0 8px 25px rgba(var(--accent-rgb),.3)}
+        .btn-secondary{background:var(--surface-glass);color:var(--text);border:1px solid var(--border-glass)}
+        .btn-secondary:hover{background:var(--surface-glass-hover);box-shadow:var(--shadow)}
+        .btn-save{background:linear-gradient(135deg,var(--success),#00b894)}
+        .btn-danger{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger)}
+        .btn-danger:hover{background:var(--danger);color:#fff;box-shadow:0 10px 25px rgba(255,77,90,.4);transform:translateY(-6px)}
+        .camera-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(720px,1fr));gap:4.5rem;margin-bottom:5rem}
+        .camera-card{backdrop-filter:blur(20px);border-radius:45px;padding:3.5rem;transition:all var(--trans);position:relative;overflow:hidden;animation:slideInUp .6s ease-out backwards}
+        .camera-card:hover{transform:translateY(-16px);box-shadow:var(--shadow-md)}
+        .camera-card::after{content:"";position:absolute;top:0;left:0;width:200%;height:100%;background:linear-gradient(115deg,transparent 40%,rgba(var(--accent-rgb),.7),rgba(var(--accent-rgb),.2) 60%,transparent 80%);transform:translateX(-100%);transition:transform .8s ease;pointer-events:none}
+        .camera-card:hover::after{transform:translateX(50%)}
+        .search-box input,.camera-card,.stats-bar,.live-view-details{background:var(--surface-glass);border:1px solid var(--border-glass)}
+        .camera-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2.8rem;position:relative}
+        .camera-title-wrapper{flex-grow:1;text-align:center}
+        .camera-title{font-size:3rem;font-weight:600;color:var(--text);margin-bottom:1.2rem}
+        .camera-id{font-size:1.8rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace}
+        .status-indicator{width:24px;height:24px;border-radius:50%;animation:pulse 2s infinite;flex-shrink:0;cursor:pointer;transition:transform .2s ease}
+        .status-indicator:hover{transform:scale(1.2)}
+        .status-online{background:var(--success);box-shadow:0 0 22px var(--success)}
+        .status-offline{background:var(--danger);box-shadow:0 0 22px var(--danger)}
+        .camera-preview{width:100%;height:380px;background:linear-gradient(135deg,#1e293b,#334155);border-radius:30px;margin-bottom:2.8rem;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;font-size:2.2rem;color:var(--text-muted)}
+        .camera-preview.live{background:linear-gradient(45deg,#ff6b6b,#4ecdc4,#45b7d1,#96ceb4);background-size:400% 400%;animation:gradientShift 4s ease infinite}
+        .camera-info{display:grid;grid-template-columns:1fr 1fr;gap:2.2rem;margin-bottom:3.2rem}
+        .info-item,.edit-item{display:flex;flex-direction:column;gap:1rem}
+        .info-label{font-size:1.6rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.2px}
+        .info-value,.edit-input{font-size:2rem;color:var(--text-dim);font-weight:500;font-family:'Poppins',sans-serif}
+        .edit-input{width:100%;background:rgba(0,0,0,.2);border:1px solid var(--border-glass);border-radius:16px;padding:1rem;color:var(--text);transition:all var(--trans)}
+        .edit-input:focus{outline:none;border-color:var(--accent);background:rgba(0,0,0,.3)}
+        .camera-actions{display:flex;gap:1.8rem;flex-wrap:wrap}
+        .btn-small{padding:1.6rem 2.2rem;font-size:1.8rem;border-radius:20px;flex:1;min-width:fit-content}
+        .btn-small svg{width:26px;height:26px}
+        .btn-small:disabled{opacity:.5;cursor:not-allowed;background:var(--surface);transform:none;box-shadow:none}
+        .camera-card .edit-item,.camera-card .edit-actions{display:none}
+        .camera-card.is-editing .info-item,.camera-card.is-editing .default-actions{display:none}
+        .camera-card.is-editing .edit-item,.camera-card.is-editing .edit-actions{display:flex}
+        .stats-bar{display:flex;backdrop-filter:blur(20px);border-radius:45px;padding:3.5rem;gap:5rem;margin-bottom:5rem;animation:fadeIn 1s ease-out}
+        .stat-item{flex:1;text-align:center}
+        .stat-number{font-size:5.5rem;font-weight:700;color:var(--accent);margin-bottom:1.8rem;font-family:'JetBrains Mono',monospace}
+        .stat-label{font-size:1.8rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:2.5px}
+        .floating-add{position:fixed;bottom:5rem;right:5rem;width:120px;height:120px;background:linear-gradient(135deg,var(--accent),var(--accent-hover));border:none;border-radius:50%;color:white;cursor:pointer;box-shadow:var(--shadow-md);transition:all var(--trans);z-index:1000;display:grid;place-items:center}
+        .floating-add svg{width:60px;height:60px;transition:transform var(--trans)}
+        .floating-add:hover{transform:scale(1.1);box-shadow:0 30px 70px var(--accent-glow)}
+        .floating-add:hover svg{transform:rotate(90deg)}
+        .floating-add:active{transform:scale(1.05)}
+        .notification{position:fixed;top:4rem;right:4rem;padding:2rem 3rem;border-radius:24px;color:white;font-weight:500;font-size:1.8rem;z-index:10000;animation:slideInRight .3s ease-out;backdrop-filter:blur(12px);box-shadow:var(--shadow-md)}
+        .fullscreen-view{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(10,15,30,.9);backdrop-filter:blur(25px);z-index:9999;display:flex;justify-content:center;align-items:center;opacity:0;pointer-events:none;transition:opacity .5s ease;padding:3rem}
+        .fullscreen-view.visible{opacity:1;pointer-events:all}
+        .fullscreen-view.visible .live-view-main{animation:slideInUp .6s .2s ease-out backwards}
+        .fullscreen-view.visible .live-view-details{animation:slideInUp .6s .3s ease-out backwards}
+        .fullscreen-view.visible .back-to-management-btn{animation:fadeIn .6s .5s ease-out backwards}
+        .fullscreen-content{width:100%;height:100%;display:grid;grid-template-columns:1fr 580px;grid-template-rows:1fr auto;gap:3rem}
+        .live-view-main{grid-row:1/2;grid-column:1/2;display:flex;flex-direction:column;gap:1.5rem}
+        .video-placeholder{width:100%;height:100%;background:#000;border-radius:35px;border:2px solid var(--border-glass);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:var(--shadow)}
+        .video-placeholder img{width:100%;height:100%;object-fit:cover;opacity:.8}
+        .live-view-details{grid-row:1/2;grid-column:2/3;border-radius:35px;padding:4rem;display:flex;flex-direction:column;gap:3.5rem;overflow-y:auto;text-align:center;-ms-overflow-style:none;scrollbar-width:none}
+        .live-view-details::-webkit-scrollbar{display:none}
+        .details-header{border-bottom:1px solid var(--border-glass);padding-bottom:3rem;margin-bottom:1.5rem}
+        .details-header .live-indicator{color:var(--success);font-weight:700;font-size:3rem;letter-spacing:2.5px;margin-bottom:1.5rem;text-shadow:0 0 12px var(--success)}
+        .details-header h2{font-size:5.5rem;font-family:'Audiowide',sans-serif}
+        .details-section{display:flex;flex-direction:column;gap:4rem}
+        .details-item{font-size:2.2rem}
+        .details-item strong{display:block;color:var(--text-muted);font-size:3rem;margin-bottom:1.5rem;text-transform:uppercase}
+        .status-badge{display:inline-block;padding:.4rem 1.4rem;border-radius:100px;font-weight:600;font-size:2rem}
+        .status-badge.status-online{background:var(--success-bg);color:var(--success);border:1px solid var(--success)}
+        .status-badge.status-offline{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger)}
+        .back-to-management-btn{grid-column:1/-1;justify-self:center}
+        .back-to-management-btn svg{transform:rotate(180deg)}
+        .close-fullscreen-btn{position:absolute;top:1.5rem;right:1.5rem;width:70px;height:70px;background:0 0;border:none;border-radius:50%;color:var(--text-muted);font-size:4rem;cursor:pointer;display:grid;place-items:center;transition:all var(--trans);z-index:10}
+        .close-fullscreen-btn:hover{background:var(--danger);color:#fff;transform:scale(1.1) rotate(180deg)}
+        .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,15,30,.9);backdrop-filter:blur(15px);z-index:10001;display:flex;justify-content:center;align-items:center;opacity:0;pointer-events:none;transition:opacity .4s ease}
+        .modal-overlay.visible{opacity:1;pointer-events:all}
+        .modal-content{background:var(--surface-glass);border:1px solid var(--border-glass);border-radius:45px;padding:4rem 5rem;width:70vw;height:85vh;max-width:1400px;box-shadow:var(--shadow-md);position:relative;transform:translateY(20px) scale(.98);transition:transform .4s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column}
+        .modal-overlay.visible .modal-content{transform:translateY(0) scale(1)}
+        .modal-content h2{font-family:'Audiowide',sans-serif;font-size:4.6rem;text-align:center;margin-bottom:3.5rem;color:var(--text);text-shadow:0 0 25px var(--accent-glow);flex-shrink:0}
+        .close-modal-btn{position:absolute;top:2rem;right:2rem;width:50px;height:50px;background:0 0;border:none;border-radius:50%;color:var(--text-muted);font-size:3rem;line-height:1;cursor:pointer;display:grid;place-items:center;transition:all var(--trans);z-index:10}
+        .close-modal-btn:hover{background:var(--danger);color:#fff;transform:scale(1.1) rotate(90deg)}
+        #add-camera-form{flex-grow:1;overflow-y:auto;padding-right:2rem;margin-right:-2rem}
+        #add-camera-form .form-group{margin-bottom:5rem;position:relative}
+        #add-camera-form .form-group-row{display:flex;gap:2.5rem;margin-bottom:5rem}
+        #add-camera-form .form-group-row .form-group{flex:1;margin-bottom:0}
+        #add-camera-form label{display:block;font-size:2.2rem;color:var(--text-dim);margin-bottom:1rem;font-weight:500}
+        #add-camera-form input,#add-camera-form select{width:100%;background:rgba(0,0,0,.2);border:1px solid var(--border-glass);border-radius:18px;padding:1.5rem 2rem;color:var(--text);transition:all var(--trans);font-size:2.4rem;font-family:'Poppins',sans-serif}
+        #add-camera-form input:focus,#add-camera-form select:focus{outline:none;border-color:var(--accent);background:rgba(0,0,0,.35);box-shadow:0 0 25px rgba(var(--accent-rgb),.4)}
+        #add-camera-form input::placeholder{color:var(--text-muted);font-weight:300}
+        .select-wrapper{position:relative}
+        .select-wrapper::after{content:'';position:absolute;top:50%;right:2.5rem;width:10px;height:10px;border-style:solid;border-color:var(--text-dim);border-width:0 3px 3px 0;display:inline-block;padding:3px;transform:translateY(-60%) rotate(45deg);pointer-events:none;transition:all var(--trans)}
+        .select-wrapper:has(select:focus)::after{transform:translateY(-40%) rotate(225deg);border-color:var(--accent)}
+        #add-camera-form select{cursor:pointer;-webkit-appearance:none;-moz-appearance:none;appearance:none;padding-right:6rem}
+        #add-camera-form select option{background:var(--bg-primary);color:var(--text-dim)}
+        #add-camera-form select option:hover{background:var(--accent);color:var(--bg-primary)}
+        .modal-actions{display:flex;justify-content:center;gap:2rem;margin-top:4rem;flex-shrink:0}
+        .modal-actions .btn{font-size:2.4rem}
+        .validation-error{position:absolute;top:100%;left:1.5rem;margin-top:.5rem;background-color:var(--danger-bg);color:var(--danger);padding:.8rem 1.5rem;border-radius:12px;font-size:1.9rem;font-weight:500;border:1px solid var(--danger);opacity:0;transform:translateY(-10px);transition:opacity .3s ease,transform .3s ease;pointer-events:none;z-index:1}
+        .validation-error.visible{opacity:1;transform:translateY(0)}
+        #add-camera-form input.invalid{border-color:var(--danger)!important;box-shadow:0 0 15px rgba(255,77,90,.5)!important}
+        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+        @keyframes gradientShift{0%{background-position:0 50%}50%{background-position:100% 50%}100%{background-position:0 50%}}
+        @keyframes slideInRight{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+        @media (max-width:1200px){.fullscreen-content{grid-template-columns:1fr;grid-template-rows:auto 1fr auto;gap:1.5rem}.live-view-main{grid-row:1/2;grid-column:1/-1}.live-view-details{grid-row:2/3;grid-column:1/-1;max-height:40vh}.back-to-management-btn{grid-row:3/4;grid-column:1/-1}}
+        @media (max-width: 900px) { .modal-content { width: 90vw; height: 90vh; padding: 3rem; } }
+    </style>
+{% endblock extra_head %}
+
+{% block content %}
+    <div class="container" id="app-container">
+        <div class="stats-bar">
+            <div class="stat-item"><div class="stat-number" id="total-cameras">0</div><div class="stat-label">Total Cameras</div></div>
+            <div class="stat-item"><div class="stat-number" id="online-cameras">0</div><div class="stat-label">Connected</div></div>
+            <div class="stat-item"><div class="stat-number" id="offline-cameras">0</div><div class="stat-label">Disconnected</div></div>
+        </div>
+        <div class="controls">
+            <div class="search-box">
+                <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M10 18a7.952 7.952 0 0 0 4.897-1.688l4.396 4.396 1.414-1.414-4.396-4.396A7.952 7.952 0 0 0 18 10c0-4.411-3.589-8-8-8s-8 3.589-8 8 3.589 8 8 8zm0-14c3.309 0 6 2.691 6 6s-2.691 6-6 6-6-2.691-6-6 2.691-6 6-6z"></path></svg>
+                <input type="text" placeholder="Search cameras..." id="search-input">
+            </div>
+            <div class="control-buttons">
+                <button class="btn btn-secondary" data-action="discover"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"></path><path d="M13 11V7h-2v5h5v-2h-3z"></path><path d="M13.414 14.828a4.017 4.017 0 0 0-4.242.001l-.001.001L10.586 16l-1.414-1.414-1.414 1.414 2.828 2.828 1.414-1.414-1.414-1.414 1.414-1.414.001-.001z"></path></svg>Auto Discover</button>
+                <button class="btn" data-action="add"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19 11h-6V5h-2v6H5v2h6v6h2v-6h6z"></path></svg>Add Camera</button>
+            </div>
+        </div>
+        <div class="camera-grid" id="camera-grid"></div>
+        <button class="floating-add" data-action="add" title="Add New Camera"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19 11h-6V5h-2v6H5v2h6v6h2v-6h6z"></path></svg></button>
+    </div>
+
+    <div class="fullscreen-view" id="fullscreen-view">
+        <div class="fullscreen-content">
+            <div class="live-view-main">
+                <div class="video-placeholder">
+                    <img src="https://i.gifer.com/origin/f1/f115273ea24263724a739b8c25567527_w200.gif" alt="Live camera feed simulation">
+                </div>
+            </div>
+            <div class="live-view-details">
+                <div class="details-header">
+                    <div class="live-indicator">● LIVE</div><h2 id="fullscreen-camera-name"></h2>
+                </div>
+                <div class="details-section">
+                    <div class="details-item"><strong>Status</strong><span id="fullscreen-camera-status"></span></div>
+                    <div class="details-item"><strong>IP Address</strong><span id="fullscreen-camera-ip"></span></div>
+                    <div class="details-item"><strong>Resolution</strong><span id="fullscreen-camera-res"></span></div>
+                    <div class="details-item"><strong>FPS</strong><span id="fullscreen-camera-fps"></span></div>
+                </div>
+            </div>
+            <button class="btn back-to-management-btn" data-action="close-fullscreen">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M13.293 6.293 7.586 12l5.707 5.707 1.414-1.414L10.414 12l4.293-4.293z"></path></svg>Back to Camera Management
+            </button>
+            <button class="close-fullscreen-btn" data-action="close-fullscreen">&times;</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="add-camera-modal">
+        <div class="modal-content">
+            <button class="close-modal-btn" data-action="close-modal">&times;</button>
+            <h2>Add New Camera</h2>
+            <form id="add-camera-form" novalidate>
+                <div class="form-group">
+                    <label for="new-camera-name">Camera Name</label>
+                    <input type="text" id="new-camera-name" placeholder="e.g., Main Entrance" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-camera-ip">IP Address</label>
+                    <input type="text" id="new-camera-ip" placeholder="e.g., 192.168.1.110" required>
+                </div>
+                <div class="form-group-row">
+                    <div class="form-group">
+                        <label for="new-camera-resolution">Resolution</label>
+                        <div class="select-wrapper">
+                            <select id="new-camera-resolution">
+                                <option value="1280x720">1280x720 (720p)</option>
+                                <option value="1920x1080" selected>1920x1080 (1080p)</option>
+                                <option value="2560x1440">2560x1440 (1440p)</option>
+                                <option value="3840x2160">3840x2160 (4K)</option>
+                                <option value="custom">Custom...</option>
+                            </select>
+                        </div>
+                        <input type="text" id="new-camera-resolution-custom" placeholder="e.g., 2048x1536" style="display: none; margin-top: 1rem;">
+                    </div>
+                    <div class="form-group">
+                        <label for="new-camera-fps">FPS</label>
+                        <input type="number" id="new-camera-fps" placeholder="e.g., 30">
+                    </div>
+                </div>
+                 <div class="form-group">
+                    <label for="new-camera-status">Initial Status</label>
+                    <div class="select-wrapper">
+                        <select id="new-camera-status">
+                            <option value="online">Connect</option>
+                            <option value="offline" selected>Disconnect</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" data-action="close-modal">Cancel</button>
+                    <button type="submit" class="btn">Add Camera</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="delete-confirm-modal">
+        <div class="modal-content" style="max-width:1000px; height: auto;"> <button class="close-modal-btn" data-action="close-delete-modal">&times;</button>
+             <h2 style="color: var(--danger);">Delete Camera</h2>
+             <p style="font-size: 2.2rem; text-align: center; margin: 2rem 0 4rem;">
+                 Are you sure you want to permanently delete camera <strong id="delete-camera-name" style="color: var(--text);"></strong>?
+                 <br>This action cannot be undone.
+             </p>
+             <div class="modal-actions">
+                 <button type="button" class="btn btn-secondary" data-action="close-delete-modal">Cancel</button>
+                 <button type="button" class="btn btn-danger" id="confirm-delete-btn">Delete</button>
+             </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded',()=>{
+        const state={cameras:[{id:'CAM-001',name:'Production Line A',ip:'192.168.1.101',status:'online',resolution:'1920x1080',fps:'30'},{id:'CAM-002',name:'Quality Control',ip:'192.168.1.102',status:'online',resolution:'2560x1440',fps:'25'},{id:'CAM-003',name:'Packaging Area',ip:'192.168.1.103',status:'offline',resolution:'1920x1080',fps:'20'},{id:'CAM-004',name:'Storage Zone',ip:'192.168.1.104',status:'online',resolution:'1920x1080',fps:'30'},{id:'CAM-005',name:'Loading Dock',ip:'192.168.1.105',status:'offline',resolution:'1280x720',fps:'0'},{id:'CAM-006',name:'Main Entrance',ip:'192.168.1.106',status:'online',resolution:'3840x2160',fps:'30'}],filter:''};
+        const ICONS={view:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"></path></svg> View`,edit:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M14.06 9.02l.92.92L5.92 19H5v-.92l9.06-9.06M17.66 3c-.25 0-.51.1-.7.29l-1.83 1.83 3.75 3.75 1.83-1.83c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29zm-3.6 3.19L3 17.25V21h3.75L17.81 9.94l-3.75-3.75z"></path></svg> Edit`,save:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg> Save`,cancel:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg> Cancel`,discover:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"></path><path d="M13 11V7h-2v5h5v-2h-3z"></path><path d="M13.414 14.828a4.017 4.017 0 0 0-4.242.001l-.001.001L10.586 16l-1.414-1.414-1.414 1.414 2.828 2.828 1.414-1.414-1.414-1.414 1.414-1.414.001-.001z"></path></svg> Auto Discover`,loading:`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8a8 8 0 0 1-8 8z" opacity=".5"/><path fill="currentColor" d="M12 4a8 8 0 0 0-8 8h2a6 6 0 1 1 6-6V4Z"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/></path></svg> Scanning...`,delete: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"></path></svg> Delete`};
+        const grid=document.getElementById('camera-grid'),searchInput=document.getElementById('search-input'),fullscreenView=document.getElementById('fullscreen-view'),addCameraModal=document.getElementById('add-camera-modal'),addCameraForm=document.getElementById('add-camera-form');
+        const deleteConfirmModal = document.getElementById('delete-confirm-modal');
+        const deleteCameraNameSpan = document.getElementById('delete-camera-name');
+        const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+        let cameraToDeleteId = null;
+        const getStatusClass=status=>`status-${status}`;
+        const createInfoOrEditField=camera=>{const fields=[{label:'IP Address',key:'ip'},{label:'Camera Name',key:'name'}];return fields.map(field=>`<div class="info-item"><div class="info-label">${field.label}</div><div class="info-value">${camera[field.key]}</div></div><div class="edit-item"><div class="info-label">Edit ${field.label}</div><input class="edit-input" data-field="${field.key}" value="${camera[field.key]}"></div>`).join('')};
+        const showNotification=(message,type='info')=>{const el=document.createElement('div');el.className=`notification`;el.style.backgroundColor=`var(--${type}, var(--info))`;el.textContent=message;document.body.appendChild(el);setTimeout(()=>el.remove(),3500)};
+        const render=()=>{const filteredCameras=state.cameras.filter(cam=>['name','id','ip'].some(prop=>cam[prop].toLowerCase().includes(state.filter)));grid.innerHTML=filteredCameras.map((camera,index)=>`<div class="camera-card" data-camera-id="${camera.id}" style="animation-delay: ${index*.08}s;"><div class="camera-header"><div class="camera-title-wrapper"><h3 class="camera-title">${camera.name}</h3><p class="camera-id">${camera.id}</p></div><div class="status-indicator ${getStatusClass(camera.status)}" title="Click to toggle status" data-action="toggle-status"></div></div><div class="camera-preview ${camera.status==='online'?'live':''}">${camera.status==='online'?'<div style="color:white;font-weight:bold;text-shadow:0 0 10px rgba(0,0,0,.8)">● LIVE</div>':'DISCONNECTED'}</div><div class="camera-info">${createInfoOrEditField(camera)}</div><div class="camera-actions default-actions"><button class="btn btn-small" data-action="view" ${camera.status==='offline'?'disabled':''}>${ICONS.view}</button><button class="btn btn-small btn-secondary" data-action="edit">${ICONS.edit}</button><button class="btn btn-small btn-danger" data-action="delete">${ICONS.delete}</button></div><div class="camera-actions edit-actions"><button class="btn btn-small btn-secondary" data-action="cancel">${ICONS.cancel}</button><button class="btn btn-small btn-save" data-action="save">${ICONS.save}</button></div></div>`).join('');const online=state.cameras.filter(c=>c.status==='online').length;document.getElementById('total-cameras').textContent=state.cameras.length;document.getElementById('online-cameras').textContent=online;document.getElementById('offline-cameras').textContent=state.cameras.length-online};
+        const openAddModal=()=>{addCameraForm.reset();document.getElementById('new-camera-resolution').value='1920x1080';document.getElementById('new-camera-resolution-custom').style.display='none';addCameraModal.classList.add('visible')};
+        const closeAddModal=()=>{addCameraModal.classList.remove('visible')};
+        const openDeleteModal = (id) => {
+            const cam = state.cameras.find(c => c.id === id);
+            if (!cam) return;
+            cameraToDeleteId = id;
+            deleteCameraNameSpan.textContent = `${cam.name} (${cam.id})`;
+            deleteConfirmModal.classList.add('visible');
+        };
+        const closeDeleteModal = () => {
+            cameraToDeleteId = null;
+            deleteConfirmModal.classList.remove('visible');
+        };
+        const validationErrorTimers={};
+        const showValidationError=(fieldId,message)=>{const field=document.getElementById(fieldId),formGroup=field.closest('.form-group');if(!formGroup)return;if(validationErrorTimers[fieldId])clearTimeout(validationErrorTimers[fieldId]);let errorEl=formGroup.querySelector('.validation-error');if(!errorEl){errorEl=document.createElement('div');errorEl.className='validation-error';formGroup.appendChild(errorEl)}errorEl.textContent=message;field.classList.add('invalid');setTimeout(()=>errorEl.classList.add('visible'),10);validationErrorTimers[fieldId]=setTimeout(()=>{errorEl.classList.remove('visible');field.classList.remove('invalid')},5e3)};
+        const actions={
+            view:id=>{const cam=state.cameras.find(c=>c.id===id);if(!cam)return;const statusSpan=document.getElementById('fullscreen-camera-status');const statusLabel=cam.status==='online'?'Connected':'Disconnected';statusSpan.textContent=statusLabel;statusSpan.className=`status-badge ${getStatusClass(cam.status)}`;document.getElementById('fullscreen-camera-name').textContent=cam.name;document.getElementById('fullscreen-camera-ip').textContent=cam.ip;document.getElementById('fullscreen-camera-res').textContent=cam.resolution;document.getElementById('fullscreen-camera-fps').textContent=cam.fps;fullscreenView.classList.add('visible')},
+            'close-fullscreen':()=>fullscreenView.classList.remove('visible'),
+            'toggle-status':id=>{const cam=state.cameras.find(c=>c.id===id);if(cam){cam.status=cam.status==='online'?'offline':'online';const statusLabel=cam.status==='online'?'connected':'disconnected';showNotification(`Camera ${id} is now ${statusLabel}.`,'info');render()}},
+            add:()=>{openAddModal()},
+            'close-modal':()=>{closeAddModal()},
+            delete:(id)=>{openDeleteModal(id)},
+            'close-delete-modal':()=>{closeDeleteModal()},
+            discover:btn=>{btn.disabled=!0;btn.innerHTML=ICONS.loading;showNotification('Scanning network for new cameras...','info');setTimeout(()=>{const newId=`CAM-${String(state.cameras.length+1).padStart(3,'0')}`;state.cameras.unshift({id:newId,name:`Discovered Camera ${state.cameras.length+1}`,ip:`192.168.1.${120+state.cameras.length}`,status:'online',resolution:'1920x1080',fps:'30'});showNotification(`Found new camera: ${newId}`,'success');btn.disabled=!1;btn.innerHTML=ICONS.discover;render()},2500)},
+            edit:id=>{const card=grid.querySelector(`.camera-card[data-camera-id="${id}"]`);card&&card.classList.add('is-editing')},
+            cancel:id=>{const card=grid.querySelector(`.camera-card[data-camera-id="${id}"]`);card&&card.classList.remove('is-editing');render()},
+            save:id=>{const card=grid.querySelector(`.camera-card[data-camera-id="${id}"]`);const cam=state.cameras.find(c=>c.id===id);if(!card||!cam)return;const newName=card.querySelector('input[data-field="name"]').value.trim();const newIp=card.querySelector('input[data-field="ip"]').value.trim();if(newName)cam.name=newName;if(newIp)cam.ip=newIp;card.classList.remove('is-editing');showNotification(`Camera ${id} updated.`,'success');render()}
+        };
+        document.body.addEventListener('click',e=>{const actionTarget=e.target.closest('[data-action]');if(!actionTarget)return;const action=actionTarget.dataset.action;if(actions[action]){const id=e.target.closest('.camera-card')?.dataset.cameraId;actions[action](id||actionTarget)}});
+        confirmDeleteBtn.addEventListener('click', () => {
+            if (!cameraToDeleteId) return;
+            const cameraIndex = state.cameras.findIndex(c => c.id === cameraToDeleteId);
+            if (cameraIndex > -1) {
+                const deletedCamera = state.cameras[cameraIndex];
+                state.cameras.splice(cameraIndex, 1);
+                showNotification(`Camera "${deletedCamera.name}" has been deleted.`, 'success');
+                render();
+            }
+            closeDeleteModal();
+        });
+        searchInput.addEventListener('input',e=>{state.filter=e.target.value.toLowerCase();render()});
+        addCameraModal.addEventListener('click', e => { if (e.target === addCameraModal) { closeAddModal(); } });
+        deleteConfirmModal.addEventListener('click', e => { if (e.target === deleteConfirmModal) { closeDeleteModal(); } });
+        document.getElementById('new-camera-resolution').addEventListener('change', e => {
+            document.getElementById('new-camera-resolution-custom').style.display = e.target.value === 'custom' ? 'block' : 'none';
+        });
+        addCameraForm.addEventListener('submit',e=>{
+            e.preventDefault();
+            let isValid=!0, resolutionValue='';
+            const nameInput=document.getElementById('new-camera-name'),ipInput=document.getElementById('new-camera-ip'),resSelect=document.getElementById('new-camera-resolution'),resCustomInput=document.getElementById('new-camera-resolution-custom'),fpsInput=document.getElementById('new-camera-fps');
+            if(nameInput.value.trim().length<3){isValid=!1;showValidationError('new-camera-name','Name must be at least 3 characters.')}
+            const ipRegex=/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+            if(!ipRegex.test(ipInput.value.trim())){isValid=!1;showValidationError('new-camera-ip','Please enter a valid IP address (e.g., 192.168.1.100).')}
+            if (resSelect.value === 'custom') {
+                resolutionValue = resCustomInput.value.trim();
+                const resRegex = /^\d{3,5}x\d{3,5}$/;
+                if (!resRegex.test(resolutionValue)) {
+                    isValid = !1;
+                    showValidationError('new-camera-resolution-custom', 'Use format WxH (e.g., 2048x1536).');
+                }
+            } else {
+                resolutionValue = resSelect.value;
+            }
+            const fpsValue=parseInt(fpsInput.value.trim(),10);
+            if(fpsInput.value.trim()&&(isNaN(fpsValue)||fpsValue<0||fpsValue>200)){isValid=!1;showValidationError('new-camera-fps','FPS must be a number between 0 and 200.')}
+            if(!isValid)return;
+            const newId=`CAM-${String(state.cameras.length+1).padStart(3,'0')}`;
+            const newCamera={id:newId,name:nameInput.value.trim(),ip:ipInput.value.trim(),status:document.getElementById('new-camera-status').value,resolution:resolutionValue||'N/A',fps:fpsInput.value.trim()||'0'};
+            state.cameras.unshift(newCamera);
+            showNotification(`Added new camera: ${newCamera.name}`,'success');
+            render();
+            closeAddModal()
+        });
+        document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(fullscreenView.classList.contains('visible')){actions['close-fullscreen']()}else if(addCameraModal.classList.contains('visible')){closeAddModal()}else if(deleteConfirmModal.classList.contains('visible')){closeDeleteModal()}}});
+        render();
+    });
+</script>
+{% endblock extra_scripts %}

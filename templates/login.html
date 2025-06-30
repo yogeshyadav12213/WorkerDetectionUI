@@ -1,0 +1,324 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SYZaar+ - Authentication</title>
+    <link rel="stylesheet" href="{% static 'Css/scrollbar.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" xintegrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Audiowide&family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+        :root {
+            --surface: rgba(30, 41, 59, 0.8);
+            --surface-hover: rgba(51, 65, 85, 0.9);
+            --accent-rgb: 64, 224, 208;
+            --accent: rgb(var(--accent-rgb));
+            --accent-hover: #38C1B3;
+            --accent-glow: rgba(var(--accent-rgb), 0.3);
+            --text: #f8fafc;
+            --text-dim: #cbd5e1;
+            --text-muted: #94a3b8;
+            --trans: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            --shadow: 0 22px 56px rgba(0, 0, 0, 0.3);
+            --glow: 0 0 68px var(--accent-glow);
+            --bg-primary: #0A0F1E;
+            --surface-glass: rgba(22, 32, 47, 0.6);
+            --surface-glass-hover: rgba(38, 50, 68, 0.7);
+            --text-primary: #F5F7FA;
+            --text-secondary: #A8B5C2;
+            --text-tertiary: #7A8A98;
+            --border-glass: rgba(255, 255, 255, 0.1);
+            --shadow-md: 0 22px 68px rgba(0, 0, 0, 0.3);
+            --font-main: 'Inter', 'Poppins', sans-serif;
+            --danger: #FF4D5A;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: var(--font-main);
+            background: var(--bg-primary);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: auto;
+        }
+        #background-iframe {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            border: none;
+            z-index: -1;
+            pointer-events: none;
+        }
+        .auth-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 4.5rem;
+            margin: 2rem 0;
+            position: relative;
+            z-index: 1;
+        }
+        .auth-card {
+            background: var(--surface-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: 54px;
+            padding: 6.75rem;
+            width: 100%;
+            max-width: 1012px;
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+            animation: slideInUp 0.8s ease-out;
+        }
+        .auth-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+            animation: shimmer 3s infinite;
+        }
+        .auth-header {
+            text-align: center;
+            margin-bottom: 5.625rem;
+        }
+        .logo {
+            font-family: 'Audiowide', sans-serif;
+            font-size: 5.625rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 1.125rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.125rem;
+        }
+        .logo .plus-sign {
+            font-family: 'Dancing Script', cursive;
+            font-size: 6.75rem;
+            color: var(--accent);
+            filter: drop-shadow(0 0 33px var(--accent-glow));
+            animation: pulse 2s ease-in-out infinite alternate;
+        }
+        .auth-subtitle {
+            color: var(--text-secondary);
+            font-size: 2.25rem;
+            font-weight: 400;
+        }
+        .tab-nav {
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 27px;
+            padding: 9px;
+            margin-bottom: 4.5rem;
+            position: relative;
+        }
+        .tab-button {
+            flex: 1;
+            padding: 1.68rem 2.25rem;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-family: var(--font-main);
+            font-size: 2.13rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 18px;
+            transition: all var(--trans);
+            text-decoration: none;
+            text-align: center;
+        }
+        .tab-button.active {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 5px 22px rgba(var(--accent-rgb), 0.3);
+        }
+        .tab-button:hover:not(.active) {
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .form-container {
+            position: relative;
+        }
+        .auth-form {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        .auth-form.active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 3.375rem;
+            position: relative;
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 1.125rem;
+            color: var(--text-secondary);
+            font-size: 2.025rem;
+            font-weight: 500;
+        }
+        .form-input {
+            width: 100%;
+            padding: 2.25rem 2.8rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-glass);
+            border-radius: 27px;
+            color: var(--text);
+            font-family: var(--font-main);
+            font-size: 2.25rem;
+            transition: all var(--trans);
+            outline: none;
+        }
+        .form-input:-webkit-autofill,
+        .form-input:-webkit-autofill:hover,
+        .form-input:-webkit-autofill:focus,
+        .form-input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 40px var(--bg-primary) inset !important;
+            -webkit-text-fill-color: var(--text) !important;
+        }
+        .form-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 6px rgba(var(--accent-rgb), 0.1);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .form-input::placeholder {
+            color: var(--text-tertiary);
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 2.25rem;
+            background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+            border: none;
+            border-radius: 27px;
+            color: white;
+            font-family: var(--font-main);
+            font-size: 2.25rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--trans);
+            position: relative;
+            overflow: hidden;
+            margin-top: 2rem;
+        }
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 18px 56px rgba(var(--accent-rgb), 0.4);
+        }
+        .error-message {
+            color: var(--danger);
+            background-color: rgba(255, 77, 90, 0.15);
+            border: 1px solid var(--danger);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 2rem;
+            font-weight: 500;
+        }
+        .form-errors {
+            padding: 0;
+            margin-top: 1rem;
+            color: var(--danger);
+            font-size: 1.8rem;
+            list-style: none;
+            text-align: left;
+        }
+        .form-errors li {
+            margin-top: 0.5rem;
+        }
+        @keyframes shimmer { 0% { left: -100%; } 100% { left: 100%; } }
+        @keyframes slideInUp { from { opacity: 0; transform: translateY(68px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0% { filter: drop-shadow(0 0 33px var(--accent-glow)); } 100% { filter: drop-shadow(0 0 56px var(--accent-glow)); } }
+    </style>
+</head>
+<body>
+    <iframe src="{% static 'Html/Background.html' %}" id="background-iframe"></iframe>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <a href="{% url 'landing' %}" style="text-decoration: none; color: inherit;">
+                    <div class="logo">
+                        Syzaar<span class="plus-sign">+</span>
+                    </div>
+                </a>
+                <p class="auth-subtitle">Smart Productivity Analysis System</p>
+            </div>
+
+            <div class="tab-nav">
+                <a href="{% url 'login' %}" class="tab-button {% if form_type == 'login' %}active{% endif %}">Login</a>
+                <a href="{% url 'signup' %}" class="tab-button {% if form_type == 'signup' %}active{% endif %}">Sign Up</a>
+            </div>
+
+            <div class="form-container">
+                <div class="auth-form {% if form_type == 'login' %}active{% endif %}">
+                    <form method="POST" action="{% url 'login' %}" novalidate>
+                        {% csrf_token %}
+                        {% if error_message %}
+                            <div class="error-message">{{ error_message }}</div>
+                        {% endif %}
+                        <div class="form-group">
+                            <label for="id_username_login" class="form-label">Username</label>
+                            <input type="text" id="id_username_login" name="username" class="form-input" placeholder="Enter your username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="id_password_login" class="form-label">Password</label>
+                            <input type="password" id="id_password_login" name="password" class="form-input" placeholder="Enter your password" required>
+                        </div>
+                        <button type="submit" class="submit-btn">Login to System</button>
+                    </form>
+                </div>
+
+                <div class="auth-form {% if form_type == 'signup' %}active{% endif %}">
+                    <form method="POST" action="{% url 'signup' %}" novalidate>
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="error-message">
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        
+                        {% for field in form %}
+                            <div class="form-group">
+                                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                                {{ field }}
+                                {% if field.help_text %}
+                                    <div class="form-help-text" style="font-size: 1.5rem; color: var(--text-muted); margin-top: 1rem; text-align: left;">{{ field.help_text|safe }}</div>
+                                {% endif %}
+                                {% if field.errors %}
+                                    <div class="form-errors">
+                                        <ul class="errorlist">
+                                        {% for error in field.errors %}
+                                            <li>{{ error }}</li>
+                                        {% endfor %}
+                                        </ul>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+
+                        <button type="submit" class="submit-btn">Create Account</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

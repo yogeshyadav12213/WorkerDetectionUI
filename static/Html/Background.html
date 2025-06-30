@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+-<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animated Background</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        body {
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #0a0a0f 100%);
+        }
+        .neural-grid,
+        .ai-node,
+        .data-stream,
+        .data-particle,
+        .energy-orbit {
+            position: absolute;
+            z-index: -1;
+            pointer-events: none;
+        }
+        .neural-grid {
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                radial-gradient(circle at 15% 25%, rgba(0,255,255,.15) 2px, transparent 2px),
+                radial-gradient(circle at 85% 75%, rgba(255,0,128,.12) 1px, transparent 1px),
+                radial-gradient(circle at 45% 15%, rgba(0,255,127,.1) 1px, transparent 1px),
+                radial-gradient(circle at 75% 35%, rgba(255,215,0,.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,255,255,.03) 1px, transparent 1px),
+                linear-gradient(rgba(0,255,255,.03) 1px, transparent 1px);
+            background-size: 120px 120px, 90px 90px, 150px 150px, 80px 80px, 30px 30px, 30px 30px;
+            animation: neuralPulse 20s ease-in-out infinite;
+        }
+        .ai-node {
+            width: 25px;
+            height: 25px;
+            background: radial-gradient(circle, rgba(0,255,255,1) 0%, rgba(0,255,255,.2) 100%);
+            border-radius: 50%;
+            box-shadow: 0 0 30px rgba(0,255,255,.8), 0 0 60px rgba(0,255,255,.4), inset 0 0 10px rgba(255,255,255,.3);
+            animation: nodeFlicker 2.5s ease-in-out infinite;
+        }
+        .data-stream {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(0,255,255,.9), rgba(255,0,128,.7), transparent);
+            box-shadow: 0 0 10px rgba(0,255,255,.6);
+            animation: streamFlow 3.5s ease-in-out infinite;
+        }
+        .data-particle {
+            width: 8px;
+            height: 8px;
+            background: rgba(0,255,127,.9);
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(0,255,127,.8);
+            animation: particleFloat 10s linear infinite;
+        }
+        .energy-orbit {
+            border: 4px solid transparent;
+            border-top-color: rgba(0,255,255,.7);
+            border-right-color: rgba(255,0,128,.5);
+            border-bottom-color: rgba(0,255,127,.6);
+            border-left-color: rgba(255,215,0,.4);
+            border-radius: 50%;
+            animation: orbitSpin 12s linear infinite;
+        }
+        .mouse-scanner {
+            position: fixed;
+            pointer-events: none;
+            border: 3px solid rgba(0,255,255,.8);
+            border-radius: 50%;
+            animation: scanEffect .5s ease-out forwards;
+            z-index: 9999;
+        }
+        @keyframes neuralPulse {
+            0%, 100% { opacity: .4; transform: scale(1); }
+            25% { opacity: .7; transform: scale(1.01); }
+            50% { opacity: .9; transform: scale(1.02); }
+            75% { opacity: .6; transform: scale(1.01); }
+        }
+        @keyframes nodeFlicker {
+            0%, 100% { transform: scale(1); opacity: .8; }
+            50% { transform: scale(1.3); opacity: 1; }
+        }
+        @keyframes streamFlow {
+            0% { width: 0; opacity: 0; }
+            30% { width: 300px; opacity: 1; }
+            70% { width: 300px; opacity: 1; }
+            100% { width: 0; opacity: 0; }
+        }
+        @keyframes particleFloat {
+            0% { transform: translateY(100vh) translateX(0) scale(0) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; transform: scale(1) rotate(45deg); }
+            90% { opacity: 1; transform: rotate(315deg); }
+            100% { transform: translateY(-50px) translateX(200px) scale(0) rotate(360deg); opacity: 0; }
+        }
+        @keyframes orbitSpin {
+            0% { transform: rotate(0deg); filter: hue-rotate(0deg); }
+            100% { transform: rotate(360deg); filter: hue-rotate(360deg); }
+        }
+        @keyframes scanEffect {
+            0% { width: 20px; height: 20px; opacity: 1; border-width: 4px; }
+            100% { width: 200px; height: 200px; opacity: 0; border-width: 1px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="neural-grid"></div>
+    <script>
+        const createElement = (className, styles, duration) => {
+            const el = document.createElement('div');
+            el.className = className;
+            Object.assign(el.style, styles);
+            document.body.appendChild(el);
+            if (duration) {
+                setTimeout(() => el.remove(), duration);
+            }
+        };
+
+        const elementConfigs = [{
+            className: 'ai-node',
+            interval: 600,
+            duration: 7000,
+            getStyles: () => ({
+                left: `${Math.random() * (window.innerWidth - 25)}px`,
+                top: `${Math.random() * (window.innerHeight - 25)}px`,
+                animationDelay: `${Math.random() * 2.5}s`
+            })
+        }, {
+            className: 'data-stream',
+            interval: 1000,
+            duration: 7000,
+            getStyles: () => ({
+                left: `${Math.random() * (window.innerWidth - 300)}px`,
+                top: `${Math.random() * window.innerHeight}px`,
+                animationDelay: `${Math.random() * 3.5}s`
+            })
+        }, {
+            className: 'data-particle',
+            interval: 400,
+            duration: 10000,
+            getStyles: () => ({
+                left: `${Math.random() * window.innerWidth}px`,
+                animationDelay: `${Math.random() * 10}s`
+            })
+        }, {
+            className: 'energy-orbit',
+            interval: 4000,
+            duration: 20000,
+            getStyles: () => {
+                const size = 150 + Math.random() * 300;
+                return {
+                    width: `${size}px`,
+                    height: `${size}px`,
+                    left: `${Math.random() * (window.innerWidth - size)}px`,
+                    top: `${Math.random() * (window.innerHeight - size)}px`,
+                    animationDuration: `${8 + Math.random() * 8}s`
+                };
+            }
+        }];
+
+        elementConfigs.forEach(config => {
+            setInterval(() => {
+                createElement(config.className, config.getStyles(), config.duration);
+            }, config.interval);
+        });
+
+        document.addEventListener('mousemove', e => {
+            createElement('mouse-scanner', {
+                left: `${e.clientX - 10}px`,
+                top: `${e.clientY - 10}px`
+            }, 500);
+        });
+
+        setInterval(() => {
+            const elements = document.querySelectorAll('.ai-node, .data-stream, .data-particle, .energy-orbit');
+            if (elements.length > 70) {
+                elements[0].remove();
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

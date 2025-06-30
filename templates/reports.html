@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        .main-content {
+            display: block;
+            padding: 32vmin 2rem 15vmin;
+            align-items: flex-start;
+            justify-content: flex-start;
+            font-family: 'Poppins', 'Segoe UI', sans-serif;
+        }
+        .dashboard-container { width: 100%; margin: 0 auto; max-width: 2500px; padding: 1.5rem; position: relative; z-index: 10; }
+        .glass-card { background: rgba(17, 34, 64, 0.75); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(0, 221, 209, 0.2); border-radius: 16px; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative;}
+        .glass-card:hover { border-color: rgba(0, 221, 209, 0.5); transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2), 0 0 20px rgba(0, 221, 209, 0.3); }
+        .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.8s ease-out, transform 0.6s ease-out; }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+        .glow-text { text-shadow: 0 0 8px rgba(0, 221, 209, 0.8); }
+        .search-input, .select-input, .date-input { padding: 1rem 1.5rem; border: 1px solid rgba(0, 221, 209, 0.3); border-radius: 8px; background: #152238; color: #bfdbfe; transition: all 0.3s ease; font-size: 1.5rem; cursor: pointer; }
+        .search-input:focus, .select-input:focus, .date-input:focus { outline: none; border-color: #00ddd1; box-shadow: 0 0 0 2px rgba(0, 221, 209, 0.2); }
+        .dropdown { position: absolute; top: 110%; left: 0; width: 100%; background: #152238; border: 1px solid #00ddd1; border-radius: 8px; z-index: 20; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); display: none; max-height: 15rem; overflow-y: auto; }
+        .dropdown.show { display: block; }
+        .dropdown-item { padding: 0.75rem 1rem; cursor: pointer; color: #bfdbfe; transition: all 0.2s ease; font-size: 1.5rem; }
+        .dropdown-item:hover { background: #0e7490; color: #ffffff; }
+        .table-header { background: rgba(0, 221, 209, 0.1); border-bottom: 1px solid rgba(0, 221, 209, 0.3); }
+        .table-row:hover { background: rgba(0, 221, 209, 0.05); }
+        .productivity-high { color: #10b981; } .productivity-medium { color: #f59e0b; }
+        .live-indicator { width: 1rem; height: 1rem; background: #10b981; border-radius: 50%; animation: pulse 2s infinite; }
+        .hidden { display: none; }
+        @keyframes gradient-x{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.2);opacity:.7}}
+    </style>
+{% endblock extra_head %}
+
+{% block content %}
+<div class="dashboard-container">
+    <header class="text-center mb-28 reveal">
+        <div class="flex items-center justify-center gap-4 mb-4"><div class="flex items-center gap-2"><div class="live-indicator"></div><span class="text-3xl text-gray-400">Live</span></div></div>
+        <h1 class="text-7xl md:text-8xl font-bold mb-4 glow-text" id="mainReportTitle">Today's Report</h1>
+        <p class="text-3xl text-gray-400" id="currentDate"></p>
+    </header>
+
+    <div class="mb-28">
+        <h2 class="text-5xl font-bold mb-10 text-white reveal">Overall status</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-14">
+            <div class="glass-card rounded-xl p-10 reveal text-center"><div class="text-7xl font-bold text-cyan-400 mb-4" id="totalRecordsToday"></div><div class="text-3xl text-gray-400">Total Records Today</div></div>
+            <div class="glass-card rounded-xl p-10 reveal text-center"><div class="text-7xl font-bold text-green-400 mb-4" id="overallActiveWorkers"></div><div class="text-3xl text-gray-400">Active Workers (Overall)</div></div>
+            <div class="glass-card rounded-xl p-10 reveal text-center"><div class="text-7xl font-bold text-yellow-400 mb-4" id="avgProductivity"></div><div class="text-3xl text-gray-400">Average Productivity</div></div>
+            <div class="glass-card rounded-xl p-10 reveal text-center"><div class="text-7xl font-bold text-purple-400 mb-4" id="workHours"></div><div class="text-3xl text-gray-400">Work Hours</div></div>
+        </div>
+    </div>
+
+    <div class="glass-card p-14 mb-28 reveal">
+        <h2 class="text-5xl font-bold mb-10 text-white text-center">Zone-Specific Analysis</h2>
+        <div class="controls mb-14">
+            <div class="flex flex-wrap gap-10 items-center justify-center">
+                <div id="dateControls" class="flex items-center gap-6"><select class="select-input" id="timeRange" onchange="handleTimeRangeChange()"><option value="today">Today</option><option value="week">Current Week</option><option value="month">Current Month</option><option value="specific">Specific Date</option></select><input type="date" class="date-input hidden" id="specificDate" onchange="handleDateChange()"></div>
+                <div class="relative"><input type="text" class="search-input" placeholder="Search Zone..." id="zoneSearch" onfocus="handleZoneSearch()" oninput="handleZoneSearch()"><div class="dropdown" id="zoneDropdown"></div></div>
+                <div class="relative"><input type="text" class="search-input" placeholder="Select Camera..." id="cameraSelect" readonly><div class="dropdown" id="cameraDropdown"></div></div>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-10"><div class="glass-card p-10"><h3 class="text-4xl font-semibold text-gray-300 mb-4">Avg. Efficiency</h3><div class="text-7xl font-bold text-green-400" id="zoneAvgEfficiency">0%</div></div><div class="glass-card p-10"><h3 class="text-4xl font-semibold text-gray-300 mb-2">Active Workers</h3><div class="text-7xl font-bold text-blue-400" id="zoneTotalWorkers">0</div></div><div class="glass-card p-10"><h3 class="text-4xl font-semibold text-gray-300 mb-2" id="alertsTitle">Today's Alerts</h3><div class="text-7xl font-bold text-red-400" id="zoneTotalAlerts">0</div></div></div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-14 mb-28">
+        <div class="glass-card p-14 reveal"><h3 class="text-6xl font-semibold mb-10 text-white" id="efficiencyTitle">Hourly Zone Efficiency</h3><div style="height: 600px;"><canvas id="efficiencyChart"></canvas></div></div>
+        <div class="glass-card p-14 reveal"><h3 class="text-6xl font-semibold mb-10 text-white" id="performanceTitle">Average Zone Performance</h3><div style="height: 600px;"><canvas id="performanceChart"></canvas></div></div>
+    </div>
+
+    <div class="reveal mb-28">
+        <h2 class="text-7xl font-bold mb-10 text-white">Shift Data Analysis</h2>
+        <div class="glass-card"><div class="overflow-x-auto"><div class="table-header p-7 min-w-[1200px]"><div class="grid grid-cols-5 gap-6 text-4xl font-semibold text-gray-300"><div>Shift</div><div>Number of People</div><div>Work Hours</div><div>Productivity</div><div>Status</div></div></div><div class="p-5 space-y-5 min-w-[1200px]"><div class="table-row grid grid-cols-5 gap-6 text-4xl p-7 rounded-lg items-center"><div class="font-medium">Morning Shift</div><div>18</div><div>8:00-16:00</div><div class="productivity-high font-semibold">High</div><div><span class="inline-flex items-center gap-3 px-5 py-2 rounded-full text-3xl bg-green-900/50 text-green-400"><div class="w-4 h-4 bg-green-400 rounded-full"></div>Active</span></div></div><div class="table-row grid grid-cols-5 gap-6 text-4xl p-7 rounded-lg items-center"><div class="font-medium">Evening Shift</div><div>15</div><div>16:00-24:00</div><div class="productivity-high font-semibold">High</div><div><span class="inline-flex items-center gap-3 px-5 py-2 rounded-full text-3xl bg-green-900/50 text-green-400"><div class="w-4 h-4 bg-green-400 rounded-full"></div>Active</span></div></div><div class="table-row grid grid-cols-5 gap-6 text-4xl p-7 rounded-lg items-center"><div class="font-medium">Night Shift</div><div>12</div><div>00:00-08:00</div><div class="productivity-medium font-semibold">Medium</div><div><span class="inline-flex items-center gap-3 px-5 py-2 rounded-full text-3xl bg-yellow-900/50 text-yellow-400"><div class="w-4 h-4 bg-yellow-400 rounded-full"></div>Low Activity</span></div></div></div></div></div>
+    </div>
+
+    <div class="reveal">
+        <h2 class="text-6xl font-bold mb-10 text-white">Notifications & Alerts</h2>
+        <div class="glass-card rounded-xl p-8">
+            <div class="space-y-8">
+                <div class="flex items-start gap-6 p-6 rounded-lg bg-green-900/20 border border-green-500/30">
+                    <i data-lucide="check-circle" class="w-12 h-12 text-green-400 mt-1 flex-shrink-0"></i>
+                    <div>
+                        <div class="font-medium text-green-400 text-3xl">Record Productivity</div>
+                        <div class="text-2xl text-gray-400 mt-2">Zone A1 reached a peak efficiency of 98% at 11:34 AM.</div>
+                        <div class="text-xl text-gray-500 mt-3">Operator ID: E-451</div>
+                    </div>
+                </div>
+                <div class="flex items-start gap-6 p-6 rounded-lg bg-yellow-900/20 border border-yellow-500/30">
+                    <i data-lucide="alert-triangle" class="w-12 h-12 text-yellow-400 mt-1 flex-shrink-0"></i>
+                    <div>
+                        <div class="font-medium text-yellow-400 text-3xl">Prolonged Idle Time</div>
+                        <div class="text-2xl text-gray-400 mt-2">Worker ID W-109 in Zone C3 has been idle for more than 15 minutes.</div>
+                        <div class="text-xl text-gray-500 mt-3">Last activity at 10:58 AM.</div>
+                    </div>
+                </div>
+                <div class="flex items-start gap-6 p-6 rounded-lg bg-red-900/20 border border-red-500/30">
+                    <i data-lucide="shield-alert" class="w-12 h-12 text-red-400 mt-1 flex-shrink-0"></i>
+                    <div>
+                        <div class="font-medium text-red-400 text-3xl">Safety Violation: PPE Not Detected</div>
+                        <div class="text-2xl text-gray-400 mt-2">Operator in Assembly Line 2 is not wearing a required safety helmet.</div>
+                        <div class="text-xl text-gray-500 mt-3">Camera: CAM-004, Time: 11:41 AM</div>
+                    </div>
+                </div>
+                <div class="flex items-start gap-6 p-6 rounded-lg bg-blue-900/20 border border-blue-500/30">
+                    <i data-lucide="video-off" class="w-12 h-12 text-blue-400 mt-1 flex-shrink-0"></i>
+                    <div>
+                        <div class="font-medium text-blue-400 text-3xl">Camera Offline</div>
+                        <div class="text-2xl text-gray-400 mt-2">Connection to Warehouse Cam 2 (192.168.1.102) has been lost.</div>
+                        <div class="text-xl text-gray-500 mt-3">Attempting to reconnect...</div>
+                    </div>
+                </div>
+                <div class="flex items-start gap-6 p-6 rounded-lg bg-yellow-900/20 border border-yellow-500/30">
+                    <i data-lucide="users" class="w-12 h-12 text-yellow-400 mt-1 flex-shrink-0"></i>
+                    <div>
+                        <div class="font-medium text-yellow-400 text-3xl">Unusual Activity Detected</div>
+                        <div class="text-2xl text-gray-400 mt-2">Multiple personnel detected in restricted Storage Zone D after hours.</div>
+                        <div class="text-xl text-gray-500 mt-3">Time: 11:55 AM</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock content %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        let selectedZone = 'all', selectedCamera = 'all', timeRange = 'today', specificDate = '', charts = {};
+        const zones = [{id: 'all', name: 'All Zones'}, {id: 'zone1', name: 'Zone 1'}, {id: 'zone2', name: 'Zone 2'}, {id: 'zone3', name: 'Zone 3'}];
+        const cameras = [{id: 'all', name: 'All Cameras'}, {id: 'cam1', name: 'Lobby Cam 1'}, {id: 'cam2', name: 'Warehouse Cam 2'}, {id: 'cam3', name: 'Exit Cam 3'}, {id: 'cam4', name: 'Rooftop Cam 4'}];
+
+        function createSeededRandom(s){return(min,max)=>(s=(s*9301+49297)%233280,Math.floor(s/233280*(max-min+1))+min)}
+        function generateHourlyData(d,t){let s=d?new Date(d).getTime():new Date().setHours(0,0,0,0);if(t==='week')s+=1e5;else if(t==='month')s+=2e5;const r=createSeededRandom(s);let p={z1:{b:75,p:95,d:60},z2:{b:70,p:88,d:55},z3:{b:80,p:98,d:65}};if(t==='week')p={z1:{b:70,p:98,d:50},z2:{b:65,p:90,d:50},z3:{b:75,p:99,d:60}};else if(t==='month')p={z1:{b:80,p:92,d:70},z2:{b:75,p:85,d:68},z3:{b:82,p:95,d:75}};const gs=(b,pe,di)=>["08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00"].map(ti=>(ti==="12:00"||ti==="13:00"?r(di,b-10):r(b,pe)));return {times:["08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00"],zone1:gs(p.z1.b,p.z1.p,p.z1.d),zone2:gs(p.z2.b,p.z2.p,p.z2.d),zone3:gs(p.z3.b,p.z3.p,p.z3.d)};}
+        function generateZoneStats(d,t){let s=(d?new Date(d).getTime():new Date().setHours(0,0,0,0))+1e3;if(t==='week')s+=3e5;else if(t==='month')s+=4e5;const r=createSeededRandom(s);let e=[{min:85,max:95},{min:80,max:90},{min:88,max:98}];if(t==='week')e=[{min:82,max:92},{min:78,max:88},{min:85,max:95}];else if(t==='month')e=[{min:84,max:91},{min:81,max:87},{min:86,max:93}];return[{zone:"Zone 1",workers:r(10,15),avgEfficiency:r(e[0].min,e[0].max)},{zone:"Zone 2",workers:r(6,10),avgEfficiency:r(e[1].min,e[1].max)},{zone:"Zone 3",workers:r(12,18),avgEfficiency:r(e[2].min,e[2].max)}];}
+        function generateAlerts(d,t){let s=(d?new Date(d).getTime():new Date().setHours(0,0,0,0))+2e3;if(t==='week')s+=5e5;else if(t==='month')s+=6e5;return createSeededRandom(s)(2,15)}
+
+        window.handleZoneSearch = function() {
+            const value = document.getElementById("zoneSearch").value.toLowerCase();
+            const dropdown = document.getElementById("zoneDropdown");
+            dropdown.innerHTML = zones.filter(z => z.name.toLowerCase().includes(value)).map(z => `<div class="dropdown-item" onclick="selectZone('${z.id}', '${z.name}')">${z.name}</div>`).join('');
+            dropdown.classList.add("show");
+        }
+
+        window.selectZone = function(id, name) {
+            selectedZone = id;
+            document.getElementById("zoneSearch").value = name;
+            hideDropdown('zoneDropdown');
+            updateDynamicData();
+        }
+
+        window.toggleCameraDropdown = function() {
+            const dropdown = document.getElementById("cameraDropdown");
+            dropdown.innerHTML = cameras.map(c => `<div class="dropdown-item" onclick="selectCamera('${c.id}', '${c.name}')">${c.name}</div>`).join('');
+            dropdown.classList.toggle("show");
+        }
+
+        window.selectCamera = function(id, name) {
+            selectedCamera = id;
+            document.getElementById("cameraSelect").value = name;
+            hideDropdown('cameraDropdown');
+        }
+
+        function hideDropdown(id) {
+            const dropdown = document.getElementById(id);
+            if (dropdown) dropdown.classList.remove("show");
+        }
+
+        window.handleTimeRangeChange = function() {
+            timeRange=document.getElementById("timeRange").value;
+            document.getElementById("specificDate").classList.toggle("hidden",timeRange!=="specific");
+            if(timeRange!=="specific"){specificDate="";updateDynamicData()}
+        }
+
+        window.handleDateChange = function() {
+            specificDate=document.getElementById("specificDate").value;
+            updateDynamicData();
+        }
+
+        Chart.defaults.color="#A0AEC0";Chart.defaults.font.family="'Poppins',sans-serif";Chart.defaults.font.size=28;
+        function createChart(ctx,type,data,options){const id=ctx.canvas.id;if(charts[id])charts[id].destroy();charts[id]=new Chart(ctx,{type,data,options})}
+        function initIntersectionObserver(){const o=new IntersectionObserver(e=>{e.forEach(n=>{if(n.isIntersecting){n.target.classList.add('visible');o.unobserve(n.target)}})},{threshold:.1});document.querySelectorAll('.reveal').forEach(e=>o.observe(e))}
+
+        function updateDateTime(dateStr) {
+            const dateEl = document.getElementById('currentDate');
+            const date = dateStr ? new Date(dateStr + 'T00:00:00') : new Date();
+            if (dateEl) {
+                dateEl.textContent = date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            }
+        }
+
+        function updateStaticData(){
+            document.getElementById('totalRecordsToday').textContent=(15420+Math.floor(Math.random()*50)).toLocaleString('en-US');
+            document.getElementById('overallActiveWorkers').textContent=(45+Math.floor(Math.random()*5)-2).toLocaleString('en-US');
+            document.getElementById('avgProductivity').textContent=(87.5+(Math.random()-.5)*2).toFixed(1)+'%';
+            document.getElementById('workHours').textContent=6.5;
+        }
+
+        function updateDynamicData(){
+            const dateToUse=timeRange==="specific"&&specificDate?specificDate:null;
+            updateDateTime(dateToUse);
+            const hourlyData=generateHourlyData(dateToUse,timeRange);
+            const zoneStats=generateZoneStats(dateToUse,timeRange);
+            const alertsCount=generateAlerts(dateToUse,timeRange);
+            const filteredStats=selectedZone==="all"?zoneStats:zoneStats.filter(z=>z.zone.toLowerCase().replace(/\s/g,'')===selectedZone);
+            const totalEfficiency=filteredStats.reduce((s,i)=>s+i.avgEfficiency,0);
+            const avgEfficiency=filteredStats.length>0?(totalEfficiency/filteredStats.length).toFixed(1):0;
+            const totalWorkers=filteredStats.reduce((s,z)=>s+z.workers,0);
+            document.getElementById("zoneAvgEfficiency").textContent=`${avgEfficiency}%`;
+            document.getElementById("zoneTotalWorkers").textContent=totalWorkers;
+            document.getElementById("zoneTotalAlerts").textContent=alertsCount;
+            let titlePrefix="Today's";
+            if(timeRange==="specific"&&specificDate)titlePrefix=new Date(dateToUse+"T00:00:00").toLocaleDateString('en-US')+"'s";
+            else if(timeRange==="week")titlePrefix="This Week's";
+            else if(timeRange==="month")titlePrefix="This Month's";
+            document.getElementById("mainReportTitle").textContent=`${titlePrefix} Report`;
+            document.getElementById("alertsTitle").textContent=`${titlePrefix} Alerts`;
+
+            const allLineDatasets=[{id:'zone1',label:"Zone 1",data:hourlyData.zone1,borderColor:"#00ddd1",backgroundColor:"rgba(0, 221, 209, 0.1)",tension:0.4,fill:true,pointRadius:2,pointHoverRadius:8},{id:'zone2',label:"Zone 2",data:hourlyData.zone2,borderColor:"#f59e0b",backgroundColor:"rgba(245, 158, 11, 0.1)",tension:0.4,fill:true,pointRadius:2,pointHoverRadius:8},{id:'zone3',label:"Zone 3",data:hourlyData.zone3,borderColor:"#8b5cf6",backgroundColor:"rgba(139, 92, 246, 0.1)",tension:0.4,fill:true,pointRadius:2,pointHoverRadius:8}];
+            const lineChartDatasets=selectedZone==='all'?allLineDatasets:allLineDatasets.filter(ds=>ds.id===selectedZone);
+
+            createChart(document.getElementById("efficiencyChart").getContext("2d"), 'line', {
+                labels: hourlyData.times,
+                datasets: lineChartDatasets
+            }, {responsive:true,maintainAspectRatio:false,scales:{x:{grid:{color:"rgba(160,174,192,0.1)"}},y:{grid:{color:"rgba(160,174,192,0.1)"},suggestedMin:40}},plugins:{tooltip:{titleFont:{size:32},bodyFont:{size:28},callbacks:{label:function(c){let l=c.dataset.label||'';if(l)l+=': ';if(c.parsed.y!==null)l+=c.parsed.y+'%';return l}}}}});
+
+            createChart(document.getElementById("performanceChart").getContext("2d"), 'bar', {
+                labels: filteredStats.map(d => d.zone),
+                datasets: [{label:"Average Efficiency (%)",data:filteredStats.map(d=>d.avgEfficiency),backgroundColor:selectedZone==='all'?["#00ddd1","#f59e0b","#8b5cf6"]:allLineDatasets.find(ds=>ds.id===selectedZone)?.borderColor||"#00ddd1"}]
+            }, {responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{titleFont:{size:32},bodyFont:{size:28}}},scales:{x:{grid:{display:false}},y:{grid:{color:"rgba(160,174,192,0.1)"}}}});
+        }
+
+        lucide.createIcons();
+        initIntersectionObserver();
+        updateStaticData();
+        updateDynamicData();
+        setInterval(updateStaticData, 5000);
+
+        const cameraSelect = document.getElementById('cameraSelect');
+        cameraSelect.addEventListener('click', window.toggleCameraDropdown);
+
+        window.addEventListener('click', function(event) {
+            const zoneDropdown = document.getElementById('zoneDropdown');
+            const cameraDropdown = document.getElementById('cameraDropdown');
+            if (!document.getElementById('zoneSearch').contains(event.target) && !cameraDropdown.contains(event.target)) {
+                hideDropdown('zoneDropdown');
+            }
+            if (!cameraSelect.contains(event.target) && !cameraDropdown.contains(event.target)) {
+                hideDropdown('cameraDropdown');
+            }
+        });
+    });
+</script>
+{% endblock extra_scripts %}

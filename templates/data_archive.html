@@ -1,0 +1,284 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .main-content {
+            display: block;
+            padding: 25vmin 2rem 15vmin; /* Increased top padding by 10vmin */
+            align-items: flex-start;
+            justify-content: flex-start;
+            background-color: #0a192f;
+            font-family: 'Poppins', 'Segoe UI', sans-serif;
+        }
+        .container {
+             /* The margin-top is now handled by .main-content padding */
+        }
+        .glass-card {
+            background: rgba(17, 34, 64, 0.75);
+            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 221, 209, 0.2);
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover {
+            border-color: rgba(0, 221, 209, 0.5);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2), 0 0 30px rgba(0, 221, 209, 0.3);
+        }
+        .btn-primary {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(45deg, #00ddd1, #00b3a7);
+            transition: all 0.3s ease-in-out;
+        }
+        .btn-primary:hover {
+            box-shadow: 0 0 25px rgba(0, 221, 209, 0.5);
+            transform: scale(1.03);
+        }
+        .btn-primary:active {
+            transform: scale(0.99);
+        }
+        .btn-action {
+            padding: 9px 30px;
+            border: 1px solid rgba(0, 221, 209, 0.4);
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 1.5rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            background-color: transparent;
+            color: rgba(0, 221, 209, 0.9);
+        }
+        .btn-action:hover {
+            background-color: rgba(0, 221, 209, 0.2);
+            color: #00ddd1;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 12px; height: 12px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #112240; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #00ddd1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #00b3a7; }
+        .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.8s ease-out, transform 0.6s ease-out; }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+        .form-input, .form-select { background: rgba(17, 34, 64, 0.9); border: 1px solid rgba(0, 221, 209, 0.3); color: #e2e8f0; }
+        .form-input:focus, .form-select:focus { outline: none; border-color: #00ddd1; box-shadow: 0 0 0 3px rgba(0, 221, 209, 0.2); }
+        .form-select option { background-color: #112240; }
+        .glow-text { text-shadow: 0 0 8px rgba(0, 221, 209, 0.8); }
+        .details-table tbody tr:hover { background: rgba(0, 221, 209, 0.1); }
+        .efficiency-bar { width: 100%; height: 12px; background-color: rgba(255, 255, 255, 0.1); border-radius: 10px; overflow: hidden; }
+        .efficiency-fill { height: 100%; border-radius: 10px; background: linear-gradient(90deg, #00b3a7, #00ddd1); transition: width 0.5s ease-out; }
+        .modal { position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.7); backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center; }
+        .modal-content { animation: modal-fade-in 0.3s ease-out; }
+        @keyframes modal-fade-in { from { opacity: 0; transform: scale(0.95) translateY(-20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+    </style>
+{% endblock extra_head %}
+
+{% block content %}
+<div class="archive-body">
+    <div class="container mx-auto max-w-[1600px] px-8 sm:px-10 lg:px-[60px] pb-16">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-y-8 gap-x-10 md:gap-y-12 md:gap-x-16 mb-16 md:mb-24 reveal">
+            <div class="stat-card glass-card rounded-xl py-8 px-10 text-center">
+                <div class="flex items-center justify-center mx-auto w-24 h-24 rounded-full bg-cyan-900/50 mb-6 border border-cyan-500/30">
+                    <i data-lucide="video" class="w-12 h-12 text-cyan-400"></i>
+                </div>
+                <div id="active-cameras" class="text-7xl font-bold text-white">24</div>
+                <div class="text-gray-400 mt-2 text-3xl">Active Cameras</div>
+            </div>
+            <div class="stat-card glass-card rounded-xl py-8 px-10 text-center">
+                 <div class="flex items-center justify-center mx-auto w-24 h-24 rounded-full bg-cyan-900/50 mb-6 border border-cyan-500/30">
+                    <i data-lucide="users" class="w-12 h-12 text-cyan-400"></i>
+                </div>
+                <div id="monitored-personnel" class="text-7xl font-bold text-white">156</div>
+                <div class="text-gray-400 mt-2 text-3xl">Monitored Personnel</div>
+            </div>
+            <div class="stat-card glass-card rounded-xl py-8 px-10 text-center">
+                 <div class="flex items-center justify-center mx-auto w-24 h-24 rounded-full bg-cyan-900/50 mb-6 border border-cyan-500/30">
+                    <i data-lucide="gauge-circle" class="w-12 h-12 text-cyan-400"></i>
+                </div>
+                <div id="overall-efficiency" class="text-7xl font-bold text-white">89%</div>
+                <div class="text-gray-400 mt-2 text-3xl">Overall Efficiency</div>
+            </div>
+            <div class="stat-card glass-card rounded-xl py-8 px-10 text-center">
+                 <div class="flex items-center justify-center mx-auto w-24 h-24 rounded-full bg-cyan-900/50 mb-6 border border-cyan-500/30">
+                    <i data-lucide="database" class="w-12 h-12 text-cyan-400"></i>
+                </div>
+                <div id="daily-data" class="text-7xl font-bold text-white">3.2 GB</div>
+                <div class="text-gray-400 mt-2 text-3xl">Daily Data Volume</div>
+            </div>
+        </div>
+
+        <div class="search-filter-section glass-card rounded-xl py-8 px-10 mb-12 reveal">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-y-8 gap-x-10 items-end">
+                <div class="search-group">
+                    <label for="searchInput" class="block text-2xl font-medium text-gray-300 mb-3">Advanced Search</label>
+                    <div class="relative">
+                        <input type="text" id="searchInput" class="form-input w-full rounded-lg py-3 px-6 text-3xl" placeholder="Search by camera, zone...">
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                             <i data-lucide="search" class="w-7 h-7 text-gray-500"></i>
+                        </div>
+                    </div>
+                </div>
+                 <div class="search-group">
+                    <label for="dateFilter" class="block text-2xl font-medium text-gray-300 mb-3">Date Filter</label>
+                    <select id="dateFilter" class="form-select w-full rounded-lg py-3 px-6 text-3xl">
+                        <option value="all">All Time</option>
+                        <option value="last7days">Last 7 Days</option>
+                        <option value="last30days">Last 30 Days</option>
+                    </select>
+                </div>
+                 <div class="search-group">
+                    <label for="statusFilter" class="block text-2xl font-medium text-gray-300 mb-3">Status Filter</label>
+                    <select id="statusFilter" class="form-select w-full rounded-lg py-3 px-6 text-3xl">
+                        <option value="all">All Statuses</option>
+                        <option value="Active">Active</option>
+                        <option value="Monitoring">Monitoring</option>
+                        <option value="Maintenance">Maintenance</option>
+                    </select>
+                </div>
+                <button id="downloadFullReport" class="btn-primary text-white font-semibold w-full py-3.5 rounded-lg flex items-center justify-center gap-4 text-3xl">
+                    <i data-lucide="file-down" class="w-6 h-6"></i>
+                    Download Report
+                </button>
+            </div>
+        </div>
+
+        <div class="records-container space-y-8" id="recordsContainer"></div>
+    </div>
+
+    <div id="previewModal" class="modal">
+        <div class="modal-content glass-card rounded-xl w-11/12 max-w-7xl py-12 px-14 relative">
+            <button onclick="closePreview()" class="absolute top-6 right-6 text-gray-400 hover:text-white transition-colors">
+                <i data-lucide="x" class="w-8 h-8"></i>
+            </button>
+            <h2 id="modalTitle" class="text-6xl font-bold text-cyan-400 mb-8">Record Details</h2>
+            <div id="modalBody" class="text-gray-300 space-y-4 text-3xl"></div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_scripts %}
+<script>
+    const recordsData = [ { date: '2025-06-16', totalRecords: 1847, cameras: 8, workers: 45, avgProductivity: 87.5, details: [ { camera: 'CAM-001', trackedWorkers: 8, activity: 'Working', productivity: 92, zone: 'Assembly Line A', status: 'Active', peakTime: '10:30-11:45', idleTime: '13:00-13:15', detectionHours: '08:00-17:00' }, { camera: 'CAM-003', trackedWorkers: 4, activity: 'Break', productivity: 45, zone: 'Rest Area', status: 'Monitoring', peakTime: '09:00-09:45', idleTime: '14:30-15:00', detectionHours: '08:00-17:00' }, { camera: 'CAM-005', trackedWorkers: 2, activity: 'Idle', productivity: 15, zone: 'Quality Control', status: 'Maintenance', peakTime: '11:00-12:00', idleTime: 'N/A', detectionHours: '09:00-16:00' }, { camera: 'CAM-002', trackedWorkers: 12, activity: 'Working', productivity: 95, zone: 'Assembly Line B', status: 'Active', peakTime: '14:00-15:30', idleTime: '12:30-12:45', detectionHours: '07:30-18:00' }, ] }, { date: '2025-06-05', totalRecords: 1923, cameras: 8, workers: 47, avgProductivity: 91.2, details: [ { camera: 'CAM-002', trackedWorkers: 15, activity: 'Working', productivity: 95, zone: 'Assembly Line B', status: 'Active', peakTime: '10:00-11:00', idleTime: '13:15-13:30', detectionHours: '07:30-18:00' }, { camera: 'CAM-007', trackedWorkers: 6, activity: 'Working', productivity: 88, zone: 'Packaging', status: 'Active', peakTime: '15:00-16:00', idleTime: '10:00-10:10', detectionHours: '08:00-17:00' }, ] }, { date: '2025-05-12', totalRecords: 1756, cameras: 7, workers: 42, avgProductivity: 83.7, details: [ { camera: 'CAM-001', trackedWorkers: 10, activity: 'Working', productivity: 86, zone: 'Assembly Line A', status: 'Active', peakTime: '09:30-10:45', idleTime: '13:00-13:20', detectionHours: '08:00-17:00' } ] } ];
+    document.addEventListener('DOMContentLoaded', () => {
+        lucide.createIcons(); renderRecords(applyFilters()); initIntersectionObserver();
+        document.getElementById('searchInput').addEventListener('input', () => renderRecords(applyFilters()));
+        document.getElementById('statusFilter').addEventListener('change', () => renderRecords(applyFilters()));
+        document.getElementById('dateFilter').addEventListener('change', () => renderRecords(applyFilters()));
+        document.getElementById('downloadFullReport').addEventListener('click', downloadFullReport);
+        document.querySelectorAll('.stat-card .text-7xl').forEach(el => { const finalValue = el.textContent; el.textContent = '0'; const isPercentage = finalValue.includes('%'); const isGB = finalValue.includes('GB'); let target = parseFloat(finalValue); if (isNaN(target)) target = 0; let current = 0; const increment = target / 100; const updateCounter = () => { if (current < target) { current += increment; if (isGB) { el.textContent = current.toFixed(1) + ' GB'; } else if (isPercentage) { el.textContent = Math.ceil(current) + '%'; } else { el.textContent = Math.ceil(current); } requestAnimationFrame(updateCounter); } else { el.textContent = finalValue; } }; setTimeout(updateCounter, 500); });
+    });
+    const recordsContainer = document.getElementById('recordsContainer');
+    let expandedCards = new Set();
+    function getStatusBadge(status) { return `<span class="inline-flex items-center px-4 py-2 rounded-full text-lg font-medium bg-green-500/20 text-green-400 border border-green-500/30">${status}</span>`; }
+    function createRecordCard(record, index) {
+        const card = document.createElement('div');
+        card.className = 'record-card glass-card rounded-xl reveal';
+        const isExpanded = expandedCards.has(index);
+        card.innerHTML = `
+            <div class="header py-8 px-10 flex justify-between items-center cursor-pointer" onclick="toggleCard(${index})">
+                <div>
+                    <h3 class="text-5xl font-bold text-cyan-400">${new Date(record.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</h3>
+                    <div class="flex items-center flex-wrap gap-x-8 gap-y-2 text-2xl text-gray-400 mt-2">
+                        <span><i data-lucide="list-checks" class="inline w-5 h-5 mr-2"></i>${record.details.length} Records</span>
+                        <span><i data-lucide="users" class="inline w-5 h-5 mr-2"></i>${record.workers} Workers</span>
+                        <span><i data-lucide="video" class="inline w-5 h-5 mr-2"></i>${record.cameras} Cameras</span>
+                    </div>
+                </div>
+                <i data-lucide="chevron-down" class="w-8 h-8 expand-icon transition-transform ${isExpanded ? 'rotate-180' : ''}"></i>
+            </div>
+            <div class="details-content overflow-hidden transition-all duration-500 ease-in-out" style="max-height: ${isExpanded ? '2000px' : '0'};">
+                <div class="py-8 px-10 border-t border-cyan-500/20">
+                    <div class="table-container custom-scrollbar overflow-x-auto">
+                        <table class="details-table w-full min-w-[1920px] text-left text-2xl">
+                            <thead>
+                                <tr class="border-b border-cyan-500/20">
+                                    <th class="py-6 px-8 font-semibold text-white">Camera</th>
+                                    <th class="py-6 px-8 font-semibold text-white">Zone</th>
+                                    <th class="py-6 px-8 font-semibold text-white">Tracked Workers</th>
+                                    <th class="py-6 px-8 font-semibold text-white">Efficiency</th>
+                                    <th class="py-6 px-8 font-semibold text-white text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${record.details.map(detail => {
+                                    const detailForDownload = { ...detail, RecordDate: record.date };
+                                    return `
+                                    <tr class="border-b border-cyan-500/10">
+                                        <td class="py-6 px-8 text-gray-300 font-medium">${detail.camera}</td>
+                                        <td class="py-6 px-8 text-gray-300">${detail.zone}</td>
+                                        <td class="py-6 px-8 text-gray-300 text-center">${detail.trackedWorkers}</td>
+                                        <td class="py-6 px-8 w-72">
+                                            <div class="efficiency-bar">
+                                                <div class="efficiency-fill" style="width: ${detail.productivity}%;"></div>
+                                            </div>
+                                            <div class="text-lg text-center mt-2 text-gray-400">${detail.productivity}%</div>
+                                        </td>
+                                        <td class="py-6 px-8">
+                                            <div class="flex gap-4 justify-center">
+                                                <button class="btn-action flex items-center gap-2" onclick='showPreview(${JSON.stringify(detail)})'>
+                                                    <i data-lucide="eye" class="w-5 h-5"></i><span>Preview</span>
+                                                </button>
+                                                <button class="btn-action flex items-center gap-2" onclick='downloadRecordDetail(${JSON.stringify(detailForDownload)})'>
+                                                    <i data-lucide="download" class="w-5 h-5"></i><span>Download</span>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `}).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>`;
+        return card;
+    }
+    function renderRecords(data) {
+        recordsContainer.innerHTML = '';
+        if (data.length === 0) {
+            recordsContainer.innerHTML = `<div class="glass-card rounded-xl py-12 px-14 text-center text-gray-400 reveal text-3xl">No records found matching your criteria.</div>`;
+        } else {
+            data.forEach((record, index) => {
+                const cardElement = createRecordCard(record, index);
+                recordsContainer.appendChild(cardElement);
+            });
+        }
+        lucide.createIcons();
+        initIntersectionObserver();
+    }
+    window.toggleCard = (index) => { if (expandedCards.has(index)) { expandedCards.delete(index); } else { expandedCards.add(index); } renderRecords(applyFilters()); };
+    const modal = document.getElementById('previewModal');
+    window.showPreview = (detail) => { event.stopPropagation(); document.getElementById('modalTitle').innerText = `Details for ${detail.camera}`; const modalBody = document.getElementById('modalBody'); modalBody.innerHTML = ` <p><strong class="font-semibold text-cyan-400">Zone:</strong> ${detail.zone}</p> <p><strong class="font-semibold text-cyan-400">Tracked Workers:</strong> ${detail.trackedWorkers}</p> <p><strong class="font-semibold text-cyan-400">Detection Hours:</strong> ${detail.detectionHours}</p> <p><strong class="font-semibold text-cyan-400">Status:</strong> ${getStatusBadge(detail.status)}</p> <p><strong class="font-semibold text-cyan-400">Productivity:</strong> ${detail.productivity}%</p> `; modal.style.display = 'flex'; lucide.createIcons(); }
+    window.closePreview = () => { modal.style.display = 'none'; }
+    window.onclick = function(event) { if (event.target == modal) { closePreview(); } }
+    window.downloadRecordDetail = function(detail) {
+        event.stopPropagation();
+        let csvContent = "\uFEFF";
+        const headers = ["RecordDate", "Camera", "Zone", "Status", "Productivity", "TrackedWorkers", "Activity", "DetectionHours", "PeakTime", "IdleTime"];
+        csvContent += headers.join(",") + "\r\n";
+        const row = [ detail.RecordDate, detail.camera, `"${detail.zone.replace(/"/g, '""')}"`, detail.status, detail.productivity, detail.trackedWorkers, detail.activity, detail.detectionHours, detail.peakTime, detail.idleTime ];
+        csvContent += row.join(",") + "\r\n";
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            const filename = `record_${detail.camera}_${detail.RecordDate}.csv`;
+            link.setAttribute("href", url);
+            link.setAttribute("download", filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    }
+    function applyFilters() { const searchTerm = document.getElementById('searchInput').value.toLowerCase(); const dateFilter = document.getElementById('dateFilter').value; const statusFilter = document.getElementById('statusFilter').value; const now = new Date(); let cutoffDate = null; if (dateFilter === 'last7days') { cutoffDate = new Date(); cutoffDate.setDate(now.getDate() - 7); } else if (dateFilter === 'last30days') { cutoffDate = new Date(); cutoffDate.setDate(now.getDate() - 30); } const dateFilteredData = recordsData.filter(record => { if (!cutoffDate) return true; return new Date(record.date) >= cutoffDate; }); return dateFilteredData.map(record => { const filteredDetails = record.details.filter(detail => { const matchesSearch = searchTerm === '' || detail.camera.toLowerCase().includes(searchTerm) || detail.zone.toLowerCase().includes(searchTerm); const matchesStatus = statusFilter === 'all' || detail.status === statusFilter; return matchesSearch && matchesStatus; }); return {...record, details: filteredDetails}; }).filter(record => record.details.length > 0); }
+    function downloadFullReport() { const dataToDownload = applyFilters(); if (dataToDownload.length === 0) { alert("No data available to download for the current filters."); return; } let csvContent = "\uFEFF"; const headers = ["RecordDate", "Camera", "Zone", "Status", "Productivity", "TrackedWorkers", "Activity", "DetectionHours", "PeakTime", "IdleTime"]; csvContent += headers.join(",") + "\r\n"; dataToDownload.forEach(record => { const recordDate = record.date; record.details.forEach(detail => { const row = [ recordDate, detail.camera, `"${detail.zone.replace(/"/g, '""')}"`, detail.status, detail.productivity, detail.trackedWorkers, detail.activity, detail.detectionHours, detail.peakTime, detail.idleTime ]; csvContent += row.join(",") + "\r\n"; }); }); const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement("a"); if (link.download !== undefined) { const url = URL.createObjectURL(blob); link.setAttribute("href", url); link.setAttribute("download", "full_monitoring_report.csv"); link.style.visibility = 'hidden'; document.body.appendChild(link); link.click(); document.body.removeChild(link); } }
+    function initIntersectionObserver() { const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('visible'); observer.unobserve(entry.target); } }); }, { threshold: 0.1 }); document.querySelectorAll('.reveal').forEach(el => { observer.observe(el); }); }
+</script>
+{% endblock extra_scripts %}

@@ -1,0 +1,686 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+    <style>
+        .main-content {
+            display: block;
+            padding: 0;
+        }
+        .zone-config-page {
+            padding-top: 30vmin;
+        }
+        #camera-view {
+            width: 100vw;
+        }
+        #editor-view {
+            width: 100%;
+            height: 100vh;
+            margin-left: 0vmin;
+            margin-right: 0vmin;
+        }
+        .hidden { display: none !important; }
+        @keyframes card-enter { from { opacity: 0; transform: scale(0.95) translateY(1vmin); } to { opacity: 1; transform: none; } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .layout-controls {
+            display: flex;
+            padding-right: 39vmin;
+            justify-content: flex-end;
+            gap: 1.5vmin;
+            width: 100%;
+            margin-bottom: 2.5vmin;
+        }
+        .layout-btn {
+            background: var(--surface-glass);
+            border: 0.15vmin solid var(--border-glass);
+            color: var(--text-secondary);
+            width: 5vmin;
+            height: 5vmin;
+            border-radius: 1.2vmin;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+        .layout-btn:hover { color: var(--text-primary); border-color: var(--accent); transform: translateY(-0.3vmin); }
+        .layout-btn.active { color: var(--accent); background: rgba(0, 196, 255, 0.1); border-color: var(--accent); box-shadow: var(--glow-accent); }
+        .layout-btn svg { width: 2.8vmin; height: 2.8vmin; }
+        .camera-selection-grid {
+            display: grid;
+            gap: 2.5vmin;
+            width: 65vw;
+            margin: 0 auto;
+            transition: var(--transition);
+        }
+        .camera-selection-grid.layout-grid {
+            grid-template-columns: repeat(4, 1fr);
+        }
+        .camera-selection-grid.layout-list {
+            grid-template-columns: 1fr;
+        }
+        .camera-selection-grid.layout-list .camera-card {
+            flex-direction: row;
+            align-items: center;
+            position: relative;
+            padding-right: 8vmin;
+        }
+        .camera-selection-grid.layout-list .camera-preview { width: 10vmin; height: 10vmin; margin: 0 2vmin 0 0; flex-shrink: 0; }
+        .camera-selection-grid.layout-list .camera-info {
+            flex-direction: row;
+            align-items: center;
+            width: 100%;
+        }
+        .camera-selection-grid.layout-list .card-footer {
+            position: absolute;
+            bottom: 1.5vmin;
+            right: 1.5vmin;
+        }
+        .camera-card {
+            background: var(--surface-glass);
+            border: 0.15vmin solid var(--border-glass);
+            border-radius: 2vmin;
+            backdrop-filter: blur(12px);
+            padding: 2vmin;
+            cursor: pointer;
+            transition: background-color 0.8s, box-shadow 0.8s, border-color 0.8s;
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            animation: card-enter 0.5s ease-out backwards;
+        }
+        .camera-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 0%, rgba(0, 196, 255, 0.2), transparent 70%);
+            opacity: 0;
+            transition: opacity 0.8s;
+        }
+        .camera-card:hover::before { opacity: 1; }
+        .camera-card:hover {
+            border-color: var(--accent);
+            background: var(--surface-glass-hover);
+        }
+        .camera-card.offline { opacity: 0.6; cursor: not-allowed; }
+        .camera-card.offline:hover { transform: none; border-color: var(--border-glass); background: var(--surface-glass); }
+        .camera-card.offline:hover::before { opacity: 0; }
+        .camera-preview {
+            width: 100%;
+            height: 16vmin;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 1.2vmin;
+            margin-bottom: 1.5vmin;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+        .camera-card:hover .camera-preview { background: rgba(0, 196, 255, 0.1); }
+        .camera-preview svg { width: 45%; height: 45%; stroke: var(--text-secondary); transition: var(--transition); }
+        .camera-card:hover .camera-preview svg { stroke: var(--accent); transform: scale(1.1); filter: drop-shadow(0 0 1.5vmin var(--accent)); }
+        .camera-info {
+            display: flex;
+            flex-direction: column;
+            z-index: 1;
+            flex-grow: 1;
+        }
+        .camera-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .camera-name { font-weight: 600; font-size: 2vmin; text-shadow: 0 0 1vmin rgba(255, 255, 255, 0.1); }
+        .camera-name:focus { background: rgba(0, 196, 255, 0.1); outline: 0.2vmin solid var(--accent); border-radius: 0.5vmin; padding: 0.2vmin 0.5vmin; }
+        .camera-meta {
+            text-align: left;
+        }
+        .zone-count { font-size: 1.5vmin; color: var(--text-secondary); margin-top: 0.5vmin; }
+        .camera-status { display: flex; align-items: center; gap: 1vmin; font-size: 1.7vmin; margin-top: 1.5vmin; }
+        .status-dot { width: 1.7vmin; height: 1.7vmin; border-radius: 50%; }
+        .status-dot.online { background: var(--success); box-shadow: 0 0 1.5vmin var(--success); }
+        .status-dot.offline { background: var(--danger); }
+        .card-footer {
+            margin-top: auto;
+            display: flex;
+            justify-content: flex-end;
+            padding-top: 1.5vmin;
+        }
+        .edit-name-btn { background: none; border: none; cursor: pointer; padding: 0.5vmin; display: flex; }
+        .edit-name-btn svg { width: 4vmin; height: 4vmin; stroke: var(--text-muted); transition: stroke 0.3s; }
+        .edit-name-btn:hover svg { stroke: var(--accent); }
+        .zone-editor {
+            height: 100vh;
+            display: grid;
+            grid-template-columns: 4fr 1fr;
+            gap: 2vmin;
+            padding: 0 2vmin;
+            align-items: center;
+        }
+        .main-feed-panel, .controls-panel {
+            background: var(--surface-glass);
+            border: 0.15vmin solid transparent;
+            border-radius: 2vmin;
+            backdrop-filter: blur(12px);
+            padding: 2vmin;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            height: calc(100vh - 10vmin);
+        }
+        .main-feed-panel::after, .controls-panel::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 2vmin;
+            border: 0.15vmin solid transparent;
+            background: linear-gradient(160deg, var(--accent), var(--purple)) border-box;
+            -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: destination-out;
+            mask-composite: exclude;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2vmin; padding-bottom: 1.5vmin; border-bottom: 0.15vmin solid var(--border-glass); }
+        .panel-title { font-size: 2.3vmin; font-weight: 600; }
+        .back-button {
+            padding: 1vmin 2vmin;
+            font-size: 2.5vmin;
+            font-weight: 600;
+            border-radius: 1.2vmin;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            color: #fff;
+            background: linear-gradient(45deg, var(--accent), var(--success));
+            box-shadow: 0 0.5vmin 2vmin rgba(0, 196, 255, 0.4);
+        }
+        .back-button:hover { transform: scale(1.05) translateY(-0.3vmin); box-shadow: 0 0 2vmin var(--accent), 0 0 3vmin var(--success); }
+        .camera-feed-container {
+            flex-grow: 1;
+            background: #000;
+            border-radius: 1.2vmin;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .camera-feed-container>svg { width: 25%; height: 25%; stroke: var(--accent); filter: drop-shadow(0 0 2vmin var(--accent)); }
+        .loading-spinner {
+            width: 6vmin;
+            height: 6vmin;
+            border: 0.5vmin solid rgba(255, 255, 255, 0.2);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        .toolbar { display: flex; position: relative; background: rgba(0, 0, 0, 0.2); border-radius: 1.2vmin; padding: 0.5vmin; margin-bottom: 2vmin; }
+        .toolbar-indicator {
+            position: absolute;
+            height: calc(100% - 1vmin);
+            top: 0.5vmin;
+            background: var(--accent);
+            border-radius: 0.8vmin;
+            box-shadow: 0 0 1.5vmin var(--accent);
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            pointer-events: none;
+            opacity: 0;
+        }
+        .toolbar-indicator.visible { opacity: 1; }
+        .tool-btn {
+            flex-grow: 1;
+            padding: 1.2vmin;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 0.8vmin;
+            transition: color 0.3s;
+            z-index: 1;
+            font-weight: 500;
+            font-size: 1.8vmin;
+        }
+        .tool-btn:hover { color: var(--text-primary); }
+        .tool-btn.active { color: var(--bg-primary); }
+        .zone-list { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 1vmin; padding-right: 0.5vmin; }
+        .zone-item { display: flex; align-items: center; gap: 1vmin; padding: 1.2vmin; background: rgba(0, 0, 0, 0.2); border: 0.15vmin solid transparent; border-left-width: 0.4vmin; border-radius: 0.8vmin; cursor: pointer; transition: var(--transition); }
+        .zone-item-color-dot { width: 1.2vmin; height: 1.2vmin; border-radius: 50%; flex-shrink: 0; }
+        .zone-item-name { font-size: 1.8vmin; }
+        .zone-item:hover { background: rgba(255, 255, 255, 0.05); }
+        .zone-item.selected { border-color: var(--accent); background: rgba(0, 196, 255, 0.1); }
+        .zone-box {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            padding-top: 0.5vmin;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            border: 0.2vmin solid;
+            border-radius: 0.4vmin;
+            font-size: 1.8vmin;
+            text-align: center;
+        }
+        .zone-box.selected { border-width: 0.3vmin; box-shadow: 0 0 2vmin rgba(255, 255, 255, 0.5); }
+        .zone-drawing-preview {
+            position: absolute;
+            border: 0.2vmin dashed var(--warning);
+            background: rgba(255, 170, 51, 0.1);
+            pointer-events: none;
+            border-radius: 0.4vmin;
+        }
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .modal-overlay.visible { opacity: 1; pointer-events: auto; }
+        .modal-panel {
+            background: var(--surface-glass);
+            border: 0.15vmin solid var(--border-glass);
+            border-radius: 2vmin;
+            padding: 3vmin;
+            width: 45vmin;
+            transform: scale(0.9);
+            transition: transform 0.3s;
+            text-align: center;
+        }
+        .modal-overlay.visible .modal-panel { transform: scale(1); }
+        .modal-title { font-size: 2.3vmin; font-weight: 600; margin-bottom: 2vmin; }
+        .modal-input {
+            width: 100%;
+            padding: 1.2vmin;
+            background: rgba(0, 0, 0, 0.3);
+            border: 0.15vmin solid var(--border-glass);
+            border-radius: 1vmin;
+            color: var(--text-primary);
+            margin-bottom: 2vmin;
+            font-size: 1.9vmin;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 1.5vmin;
+            justify-content: center;
+        }
+        .modal-btn {
+            padding: 1vmin 2.5vmin;
+            border-radius: 0.8vmin;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            font-size: 1.8vmin;
+        }
+        .modal-btn.confirm { background: var(--accent); color: var(--bg-primary); }
+        .modal-btn.delete { background: var(--danger); color: var(--text-primary); }
+        .modal-btn.cancel { background: var(--surface-glass-hover); color: var(--text-secondary); }
+        .modal-panel.warning {
+            background: var(--danger);
+            border-color: var(--danger);
+            color: var(--text-primary);
+        }
+    </style>
+{% endblock extra_head %}
+
+{% block content %}
+    <div class="modal-overlay" id="name-modal">
+        <div class="modal-panel">
+            <h3 class="modal-title" id="modal-title-text"></h3>
+            <p id="modal-desc-text" style="margin-bottom: 2vmin; line-height: 1.6; font-size: 1.9vmin;"></p>
+            <input type="text" class="modal-input" id="zone-name-input">
+            <div class="modal-actions">
+                <button class="modal-btn cancel" id="cancel-name-btn">Cancel</button>
+                <button class="modal-btn confirm" id="confirm-name-btn">Confirm</button>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="warning-modal">
+        <div class="modal-panel warning">
+            <h3 class="modal-title">Not Allowed</h3>
+            <p style="margin-bottom: 2vmin; line-height: 1.6; font-size: 1.9vmin;">Zones cannot overlap with existing zones.</p>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" id="warning-close-btn">Close</button>
+            </div>
+        </div>
+    </div>
+    <div class="zone-config-page">
+        <div id="camera-view">
+            <div class="layout-controls">
+                <button class="layout-btn active" data-layout="grid" title="Grid View"><svg><use href="{% static 'Svg/icons.svg' %}#grid-icon"></use></svg></button>
+                <button class="layout-btn" data-layout="list" title="List View"><svg><use href="{% static 'Svg/icons.svg' %}#list-icon"></use></svg></button>
+            </div>
+            <div class="camera-selection-grid layout-grid" id="camera-grid"></div>
+        </div>
+        <div class="zone-editor hidden" id="editor-view">
+            <div class="main-feed-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title" id="editor-title"></h2>
+                    <button class="back-button" id="back-to-grid">←</button>
+                </div>
+                <div class="camera-feed-container" id="feed-container">
+                    <div class="loading-spinner hidden"></div>
+                </div>
+            </div>
+            <div class="controls-panel">
+                <div class="panel-header">
+                    <h3 class="panel-title">Tools & Zones</h3>
+                </div>
+                <div class="toolbar" id="zone-toolbar">
+                    <div class="toolbar-indicator"></div>
+                    <button class="tool-btn" data-tool="add">➕ Add Zone</button>
+                    <button class="tool-btn" data-tool="edit">Edit</button>
+                    <button class="tool-btn" data-tool="delete">Delete</button>
+                </div>
+                <div class="zone-list" id="zone-list-panel"></div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block extra_scripts %}
+<script>
+    const MAX_CAMERAS=10,ZONE_COLORS=['--accent','--success','--warning','--info','--purple'];
+    let state={zones:[],isDrawingZone:false,actorTool:null,selectedZoneId:null,zoneDivName:null,startingPoint:{x:0,y:0},currentModalAction:null,currentCameraId:null};
+    let elements={};
+    document.addEventListener('DOMContentLoaded',()=>{
+        elements={
+            cameraView:document.getElementById('camera-view'),
+            editorView:document.getElementById('editor-view'),
+            cameraGrid:document.getElementById('camera-grid'),
+            backButton:document.getElementById('back-to-grid'),
+            editorTitle:document.getElementById('editor-title'),
+            feedContainer:document.getElementById('feed-container'),
+            loadingSpinner:document.querySelector('.loading-spinner'),
+            zoneListPanel:document.getElementById('zone-list-panel'),
+            toolbarIndicator:document.querySelector('.toolbar-indicator'),
+            toolButtons:document.querySelectorAll('.tool-btn'),
+            nameModal:{overlay:document.getElementById('name-modal'),title:document.getElementById('modal-title-text'),description:document.getElementById('modal-desc-text'),input:document.getElementById('zone-name-input'),confirmBtn:document.getElementById('confirm-name-btn'),cancelBtn:document.getElementById('cancel-name-btn')},
+            warningModal:{overlay:document.getElementById('warning-modal'),closeBtn:document.getElementById('warning-close-btn')}
+        };
+        populateCameraGrid();
+        initLayoutSwitcher();
+        initCameraCards();
+        initZoneEditor();
+        updateAllZoneCounts();
+    });
+    const getNextZoneId=()=>`Z${state.zones.length?Math.max(...state.zones.map(z=>+z.id.slice(1)))+1:1}`;
+    const getNextZoneColor=()=>ZONE_COLORS[state.zones.length%ZONE_COLORS.length];
+    const saveZones=()=>{
+        if(state.currentCameraId){
+            localStorage.setItem(`syzaar_zones_${state.currentCameraId}`,JSON.stringify(state.zones));
+            updateZoneCount(state.currentCameraId);
+        }
+    };
+    const loadZones=camId=>{
+        state.currentCameraId=camId;
+        state.zones=JSON.parse(localStorage.getItem(`syzaar_zones_${camId}`)||'[]');
+        renderAllZones();
+    };
+    const rectanglesOverlap=(rect1,rect2)=>!(rect1.left+rect1.width<rect2.left||rect2.left+rect2.width<rect1.left||rect1.top+rect1.height<rect2.top||rect2.top+rect2.height<rect1.top);
+    const populateCameraGrid=()=>{
+        elements.cameraGrid.innerHTML='';
+        for(let i=1;i<=MAX_CAMERAS;i++){
+            const camId=`CAM-${String(i).padStart(2,'0')}`,isOffline=i===7,savedName=localStorage.getItem(`syzaar_cam_name_${camId}`)||`Camera ${i}`;
+            elements.cameraGrid.insertAdjacentHTML('beforeend',`
+                <div class="camera-card ${isOffline?'offline':''}" data-camera-id="${camId}" style="animation-delay: ${i*50}ms">
+                    <div class="camera-preview">
+                        <svg><use href="{% static 'Svg/icons.svg' %}#camera-icon"></use></svg>
+                    </div>
+                    <div class="camera-info">
+                        <div class="camera-details">
+                            <div class="camera-meta">
+                                <span class="camera-name">${savedName}</span>
+                                <div class="camera-status">
+                                    <div class="status-dot ${isOffline?'offline':'online'}"></div>
+                                    <span>${isOffline?'Disconnect':'Connect'}</span>
+                                </div>
+                                <span class="zone-count">0 Zones</span>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <button class="edit-name-btn" title="Edit Name">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>`);
+        }
+    };
+    const initLayoutSwitcher=()=>{
+        const layoutButtons=document.querySelectorAll('.layout-btn'),savedLayout=localStorage.getItem('syzaar_layout')||'grid';
+        const applyLayout=layout=>{
+            elements.cameraGrid.className=`camera-selection-grid layout-${layout}`;
+            layoutButtons.forEach(btn=>btn.classList.toggle('active',btn.dataset.layout===layout));
+            localStorage.setItem('syzaar_layout',layout);
+        };
+        layoutButtons.forEach(btn=>btn.addEventListener('click',()=>applyLayout(btn.dataset.layout)));
+        applyLayout(savedLayout);
+    };
+    const initCameraCards=()=>{
+        elements.cameraGrid.addEventListener('click', e => {
+            const card = e.target.closest('.camera-card');
+            if (!card) return;
+
+            const editBtn = e.target.closest('.edit-name-btn');
+            if (editBtn) {
+                const nameSpan = card.querySelector('.camera-name');
+                nameSpan.contentEditable = 'true';
+                nameSpan.focus();
+                const range = document.createRange();
+                const sel = window.getSelection();
+                range.selectNodeContents(nameSpan);
+                sel.removeAllRanges();
+                sel.addRange(range);
+                return;
+            }
+
+            if (card.classList.contains('offline')) return;
+
+            const nameSpan = card.querySelector('.camera-name');
+            const camId = card.dataset.cameraId;
+
+            elements.cameraView.classList.add('hidden');
+            elements.editorView.classList.remove('hidden');
+            elements.editorTitle.textContent=`Configuring Zones for: ${nameSpan.textContent}`;
+            resetTools();
+            elements.loadingSpinner.classList.remove('hidden');
+            elements.feedContainer.innerHTML = '';
+            elements.feedContainer.appendChild(elements.loadingSpinner);
+
+            setTimeout(()=>{
+                elements.loadingSpinner.classList.add('hidden');
+                elements.feedContainer.appendChild(card.querySelector('svg').cloneNode(true));
+                loadZones(camId);
+            },1000);
+        });
+
+        elements.cameraGrid.addEventListener('blur', e => {
+            if (e.target.classList.contains('camera-name')) {
+                const card = e.target.closest('.camera-card');
+                const camId = card.dataset.cameraId;
+                const newName = e.target.textContent.trim() || `Camera ${camId.split('-')[1]}`;
+                e.target.textContent = newName;
+                localStorage.setItem(`syzaar_cam_name_${camId}`, newName);
+                e.target.contentEditable = 'false';
+            }
+        }, true);
+
+        elements.cameraGrid.addEventListener('keydown', e => {
+            if (e.target.classList.contains('camera-name') && e.key === 'Enter') {
+                e.preventDefault();
+                e.target.blur();
+            }
+        });
+    };
+    const updateZoneCount=camId=>{
+        const card=document.querySelector(`.camera-card[data-camera-id="${camId}"]`);
+        if(card){
+            const zones=JSON.parse(localStorage.getItem(`syzaar_zones_${camId}`)||'[]');
+            card.querySelector('.zone-count').textContent=`${zones.length} Zone${zones.length!==1?'s':''}`;
+        }
+    };
+    const updateAllZoneCounts=()=>document.querySelectorAll('.camera-card').forEach(card=>updateZoneCount(card.dataset.cameraId));
+    const initZoneEditor=()=>{
+        elements.backButton.addEventListener('click',()=>{
+            elements.cameraView.classList.remove('hidden');
+            elements.editorView.classList.add('hidden');
+        });
+        elements.toolButtons.forEach(btn=>btn.addEventListener('click',e=>{
+            state.activeTool=e.currentTarget.dataset.tool;
+            elements.toolButtons.forEach(b=>b.classList.remove('active'));
+            e.currentTarget.classList.add('active');
+            elements.toolbarIndicator.classList.add('visible');
+            moveIndicator(e.currentTarget);
+            elements.feedContainer.style.cursor=state.activeTool==='add'?'crosshair':'default';
+            state.selectedZoneId=null;
+            updateSelectionUI();
+        }));
+        elements.feedContainer.addEventListener('mousedown',handleMouseDown);
+        elements.feedContainer.addEventListener('mousemove',handleMouseMove);
+        elements.feedContainer.addEventListener('mouseup',handleMouseUp);
+        elements.feedContainer.addEventListener('click',e=>e.target.classList.contains('zone-box')&&selectZone(e.target.dataset.id));
+        elements.zoneListPanel.addEventListener('click',e=>e.target.closest('.zone-item')?.dataset.id&&selectZone(e.target.closest('.zone-item').dataset.id));
+        elements.nameModal.cancelBtn.onclick=hideModal;
+        elements.nameModal.confirmBtn.onclick=modalConfirm;
+        elements.warningModal.closeBtn.onclick=()=>elements.warningModal.overlay.classList.remove('visible');
+        document.addEventListener('keydown',e=>{
+            if(elements.nameModal.overlay.classList.contains('visible')&&e.key==='Enter')modalConfirm();
+            if(elements.warningModal.overlay.classList.contains('visible')&&e.key==='Enter')elements.warningModal.overlay.classList.remove('visible');
+        });
+    };
+    const resetTools=()=>{
+        state.activeTool=state.selectedZoneId=null;
+        elements.toolButtons.forEach(btn=>btn.classList.remove('active'));
+        elements.toolbarIndicator.classList.remove('visible');
+        elements.feedContainer.style.cursor='default';
+    };
+    const renderAllZones=()=>{
+        elements.feedContainer.querySelectorAll('.zone-box').forEach(c=>c.remove());
+        state.zones.forEach(createZoneBox);
+        elements.zoneListPanel.innerHTML='';
+        state.zones.forEach(createZoneListItem);
+        updateSelectionUI();
+    };
+    const createZoneBox=zone=>{
+        const div=document.createElement('div');
+        div.className='zone-box';
+        div.dataset.id=zone.id;
+        div.textContent=zone.name;
+        Object.assign(div.style,{left:`${zone.rect.left}%`,top:`${zone.rect.top}%`,width:`${zone.rect.width}%`,height:`${zone.rect.height}%`,borderColor:`var(${zone.color})`,color:`var(${zone.color})`});
+        elements.feedContainer.appendChild(div);
+    };
+    const createZoneListItem=zone=>{
+        const item=document.createElement('div');
+        item.className='zone-item';
+        item.dataset.id=zone.id;
+        item.innerHTML=`<div class="zone-item-color-dot" style="background-color: var(${zone.color})"></div> <span class="zone-item-name">${zone.id}: ${zone.name}</span>`;
+        elements.zoneListPanel.appendChild(item);
+    };
+    const updateSelectionUI=()=>{
+        document.querySelectorAll('.zone-box, .zone-item').forEach(el=>el.classList.remove('selected'));
+        if(state.selectedZoneId)document.querySelectorAll(`[data-id="${state.selectedZoneId}"]`).forEach(el=>el.classList.add('selected'));
+    };
+    const moveIndicator=btn=>btn&&Object.assign(elements.toolbarIndicator.style,{width:`${btn.offsetWidth}px`,left:`${btn.offsetLeft}px`});
+    const showModal=(mode,data={})=>{
+        const{overlay,title,input,confirmBtn}=elements.nameModal;
+        input.style.display=mode==='delete'?'none':'';
+        title.textContent=mode==='add'?'Enter New Zone Name':mode==='edit'?'Edit Zone Name':'Confirm Deletion';
+        input.value=mode==='add'?`Zone ${getNextZoneId().slice(1)}`:data.name||'';
+        confirmBtn.textContent=mode==='add'?'Confirm':mode==='edit'?'Save Changes':'Delete';
+        state.currentModalAction=mode==='add'?()=>handleAddConfirm(data.rect):mode==='edit'?handleEditConfirm:handleDeleteConfirm;
+        overlay.classList.add('visible');
+        if(input.style.display!=='none')input.focus(),input.select();
+    };
+    const showWarningModal=()=>elements.warningModal.overlay.classList.add('visible');
+    const hideModal=()=>{
+        elements.nameModal.overlay.classList.remove('visible');
+        if(state.tempZoneDiv)state.tempZoneDiv.remove(),state.tempZoneDiv=null;
+    };
+    const modalConfirm=()=>state.currentModalAction?.();
+    const handleAddConfirm=rect=>{
+        const name=elements.nameModal.input.value.trim();
+        if(!name)return;
+        state.zones.push({id:getNextZoneId(),name,rect,color:getNextZoneColor()});
+        saveZones();
+        renderAllZones();
+        hideModal();
+    };
+    const handleEditConfirm=()=>{
+        const newName=elements.nameModal.input.value.trim();
+        if(!newName)return;
+        const zone=state.zones.find(z=>z.id===state.selectedZoneId);
+        if(zone)zone.name=newName;
+        saveZones();
+        renderAllZones();
+        hideModal();
+    };
+    const handleDeleteConfirm=()=>{
+        state.zones=state.zones.filter(z=>z.id!==state.selectedZoneId);
+        state.selectedZoneId=null;
+        saveZones();
+        renderAllZones();
+        hideModal();
+    };
+    const handleMouseDown=e=>{
+        if(state.activeTool!=='add'||e.target.classList.contains('zone-box'))return;
+        const feedRect=elements.feedContainer.getBoundingClientRect();
+        state.isDrawingZone=true;
+        state.startingPoint={x:e.clientX-feedRect.left,y:e.clientY-feedRect.top};
+        state.tempZoneDiv=document.createElement('div');
+        state.tempZoneDiv.className='zone-drawing-preview';
+        elements.feedContainer.appendChild(state.tempZoneDiv);
+    };
+    const handleMouseMove=e=>{
+        if(!state.isDrawingZone)return;
+        const feedRect=elements.feedContainer.getBoundingClientRect(),mouseX=e.clientX-feedRect.left,mouseY=e.clientY-feedRect.top;
+        Object.assign(state.tempZoneDiv.style,{
+            left:`${Math.min(mouseX,state.startingPoint.x)}px`,
+            top:`${Math.min(mouseY,state.startingPoint.y)}px`,
+            width:`${Math.abs(mouseX-state.startingPoint.x)}px`,
+            height:`${Math.abs(mouseY-state.startingPoint.y)}px`
+        });
+    };
+    const handleMouseUp=e=>{
+        if(!state.isDrawingZone)return;
+        state.isDrawingZone=false;
+        if(!state.tempZoneDiv)return;
+        const pixelRect={width:parseInt(state.tempZoneDiv.style.width||0),height:parseInt(state.tempZoneDiv.style.height||0)};
+        if(pixelRect.width<20||pixelRect.height<20)return state.tempZoneDiv.remove();
+        const feedRect=elements.feedContainer.getBoundingClientRect();
+        const percentRect={
+            left:(parseInt(state.tempZoneDiv.style.left)/feedRect.width)*100,
+            top:(parseInt(state.tempZoneDiv.style.top)/feedRect.height)*100,
+            width:(pixelRect.width/feedRect.width)*100,
+            height:(pixelRect.height/feedRect.height)*100
+        };
+        const hasOverlap=state.zones.some(zone=>rectanglesOverlap(percentRect,zone.rect));
+        if(hasOverlap){
+            state.tempZoneDiv.remove();
+            state.tempZoneDiv=null;
+            showWarningModal();
+        }else{
+            showModal('add',{rect:percentRect});
+        }
+    };
+    const selectZone=zoneId=>{
+        if(!state.activeTool||state.activeTool==='add')return;
+        state.selectedZoneId=state.selectedZoneId===zoneId?null:zoneId;
+        updateSelectionUI();
+        if(state.selectedZoneId){
+            const zone=state.zones.find(z=>z.id===state.selectedZoneId);
+            showModal(state.activeTool,{name:zone.name});
+        }
+    };
+</script>
+{% endblock extra_scripts %}
