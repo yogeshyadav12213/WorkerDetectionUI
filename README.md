@@ -162,6 +162,13 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
+### 🖼️ Visual Showcase
+
+#### Zone Configuration Example:
+![Zone Configuration](Project_Picture/Image%20(2).png)
+
+#### Dashboard UI Preview:
+![Dashboard UI](Project_Picture/Image%20(7).png)
 
 ## 📞 Support & Contact
 
