@@ -165,7 +165,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📞 Support & Contact
 
-- **GitHub**: [Amin-moniry-pr](https://github.com/Amin-moniry-pr/)
+- **GitHub**: [Amin-moniry-pr]([https://github.com/Amin-moniry-pr/](https://github.com/Amin-moniry-pr7/))
 - **Issues**: Please report bugs and feature requests through GitHub Issues
 - **Email**: Contact the development team for enterprise support
 
